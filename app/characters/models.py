@@ -87,6 +87,7 @@ class CharacterBase(BaseModel):
     class_archetype: str
     public_bio: str = ""
     private_notes: Optional[str] = ""
+    image_url: Optional[str] = "https://i.imgur.com/62jO8iC.png"
 
 class CharacterCreate(CharacterBase):
     pass
@@ -102,6 +103,23 @@ class CharacterInDB(CharacterBase):
     inventory: List[InventoryItem] = []
     equipment: Equipment = Field(default_factory=Equipment)
 
+    fiefs: List[Fief] = []
+
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
+
+# --- Fief Types ---
+class FiefType(str, Enum):
+    CARAVAN = "Caravan"
+    WORKSHOP = "Workshop"
+    SHIP = "Trade Ship"
+    VILLAGE = "Village"
+    CITY = "City"
+    CASTLE = "Castle"
+
+class Fief(BaseModel):
+    id: str = Field(default_factory=lambda: str(ObjectId()))
+    name: str
+    type: FiefType
+    income: int

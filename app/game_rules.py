@@ -20,6 +20,33 @@ BASE_STATS = {
     "carry_weight_base": 30.0 # Kg
 }
 
+# --- DIFFICULTY RULES ---
+DIFFICULTY_LEVELS = {
+    1: 2,   # Trivial (Fail only on 1)
+    2: 5,   # Easy
+    3: 10,  # Medium
+    4: 15,  # Hard
+    5: 20   # Legendary (Only Nat 20)
+}
+
+# --- STANDARD ACTIONS DATABASE ---
+# This populates the dropdown in the simulator
+GAME_ACTIONS = [
+    {"name": "Push/Lift Heavy Object", "attribute": "Vigor"},
+    {"name": "Intimidate", "attribute": "Vigor"},
+    {"name": "Shoot Target (Long Range)", "attribute": "Control"},
+    {"name": "Pick Lock", "attribute": "Cunning"},
+    {"name": "Spot Ambush", "attribute": "Cunning"},
+    {"name": "Tactical Analysis", "attribute": "Cunning"},
+    {"name": "Ride Difficult Mount", "attribute": "Endurance"},
+    {"name": "Forced March", "attribute": "Endurance"},
+    {"name": "Persuade Noble", "attribute": "Social"},
+    {"name": "Barter Prices", "attribute": "Social"},
+    {"name": "Rally Troops", "attribute": "Social"},
+    {"name": "Treat Wounds", "attribute": "Intelligence"},
+    {"name": "Engineer Siege Engine", "attribute": "Intelligence"},
+]
+
 # --- Skill Tree Logic ---
 
 def get_node_requirements(tier: int):

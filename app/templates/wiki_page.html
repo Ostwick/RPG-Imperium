@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.3); padding: 2rem; border: 1px solid #d4c4a8; border-radius: 4px;">
+    
+    <!-- Header -->
+    <div style="border-bottom: 1px solid var(--accent); margin-bottom: 2rem; padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+            <div style="text-transform: uppercase; font-size: 0.8rem; color: var(--accent); letter-spacing: 2px;">
+                {{ page.category }}
+            </div>
+            <h1 style="margin: 0; font-size: 2.5rem;">{{ page.title }}</h1>
+        </div>
+        
+        <div style="text-align: right;">
+            {% if user and user.role == 'GM' %}
+            <div style="display: flex; gap: 10px;">
+                <a href="/wiki/{{ page._id }}/edit" class="btn btn-small">Edit</a>
+                <form action="/wiki/{{ page._id }}/delete" method="POST" onsubmit="return confirm('Burn this page?');">
+                    <button class="btn btn-small" style="background: #8a3324;">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div style="font-family: 'Georgia', serif; font-size: 1.1rem; line-height: 1.6; color: #222; white-space: pre-wrap;">{{ page.content }}</div>
+
+    <!-- Footer -->
+    <div style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
+        <a href="/wiki" class="btn btn-small" style="background: transparent; color: var(--ink); border: 1px solid var(--ink);">← Back to Archives</a>
+    </div>
+
+</div>
+{% endblock %}

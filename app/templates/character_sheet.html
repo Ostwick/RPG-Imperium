@@ -3,21 +3,52 @@
 
 {% block content %}
 
-<!-- TOP BAR: Name & Points -->
-<div
-    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1rem;">
-    <div>
-        <h1 style="margin:0;">{{ character.name }}</h1>
-        <span>{{ character.class_archetype }}</span>
+<!-- HEADER: Photo, Details, Points -->
+<div style="display: flex; gap: 2rem; align-items: center; border-bottom: 3px solid var(--ink); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+    
+    <!-- 1. Character Photo -->
+    <div style="position: relative; width: 120px; height: 120px; flex-shrink: 0;">
+        <img src="{{ character.image_url }}" 
+             style="width: 100%; height: 100%; object-fit: cover; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.3); background: #333;"
+             onerror="this.src='https://i.imgur.com/62jO8iC.png'">
+        
+        <!-- Edit Photo Button (Owner/GM) -->
+        <button onclick="document.getElementById('photoModal').style.display='block'" 
+                title="Change Portrait"
+                style="position: absolute; bottom: -5px; right: -5px; background: var(--ink); color: #fff; border: 1px solid var(--parchment); border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+            📷
+        </button>
     </div>
-    <div style="text-align: right;">
-        <div title="Available to spend">
-            <strong>Attr Points:</strong> <span style="color: var(--accent); font-size: 1.2rem;">{{
-                character.points.attribute_points }}</span>
+
+    <!-- 2. Character Info -->
+    <div style="flex-grow: 1;">
+        <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: 1px;">{{ character.name }}</h1>
+        <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px;">
+            {{ character.class_archetype }}
         </div>
-        <div title="Available to spend">
-            <strong>Skill Points:</strong> <span style="color: var(--gold); font-size: 1.2rem;">{{
-                character.points.skill_points }}</span>
+        
+        <!-- Gold Display -->
+        <div style="margin-top: 15px; display: inline-flex; align-items: center; background: rgba(197, 160, 4, 0.1); border: 1px solid #c5a004; padding: 5px 15px; border-radius: 20px;">
+            <span style="font-size: 1.5rem; margin-right: 5px;">💰</span>
+            <span style="font-weight: bold; font-size: 1.3rem; color: var(--ink);">{{ character.status.gold }}</span>
+            
+            {% if is_gm %}
+            <button onclick="document.getElementById('goldModal').style.display='block'" 
+                    class="btn-text" 
+                    style="margin-left: 10px; color: var(--accent); font-size: 0.8rem;">(Edit)</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 3. Points Counter -->
+    <div style="text-align: right; min-width: 150px;">
+        <div style="margin-bottom: 5px;">
+            <strong>Attr Points:</strong> 
+            <span style="font-size: 1.4rem; color: var(--accent); font-weight: bold;">{{ character.points.attribute_points }}</span>
+        </div>
+        <div>
+            <strong>Skill Points:</strong> 
+            <span style="font-size: 1.4rem; color: var(--gold); font-weight: bold;">{{ character.points.skill_points }}</span>
         </div>
     </div>
 </div>
@@ -292,6 +323,59 @@
     <!-- END GRID -->
 </div>
 
+    
+<!-- FIEFS & BUSINESS SECTION -->
+<div style="margin-top: 3rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); margin-bottom: 1rem;">
+        <h3>🏰 Fiefs & Enterprises</h3>
+        {% if is_gm %}
+        <button onclick="document.getElementById('fiefModal').style.display='block'" class="btn btn-small">
+            + Add Fief
+        </button>
+        {% endif %}
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4);">
+        <tr style="background: rgba(0,0,0,0.1);">
+            <th style="text-align: left; padding: 10px;">Name</th>
+            <th style="padding: 10px;">Type</th>
+            <th style="padding: 10px;">Income</th>
+            <th style="text-align: right; padding: 10px;">Actions</th>
+        </tr>
+        {% for fief in character.fiefs %}
+        <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+            <td style="padding: 10px;"><strong>{{ fief.name }}</strong></td>
+            <td style="text-align: center;">{{ fief.type }}</td>
+            <td style="text-align: center; color: #c5a004; font-weight: bold;">+{{ fief.income }}</td>
+            <td style="text-align: right; padding: 10px;">
+                {% if is_gm %}
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <!-- COLLECT -->
+                    <form action="/characters/{{ character._id }}/fiefs/collect" method="POST">
+                        <input type="hidden" name="fief_id" value="{{ fief.id }}">
+                        <button class="btn btn-small" title="Add income to Gold">💰 Collect</button>
+                    </form>
+                    <!-- DELETE -->
+                    <form action="/characters/{{ character._id }}/fiefs/delete" method="POST" onsubmit="return confirm('Destroy this fief?');">
+                        <input type="hidden" name="fief_id" value="{{ fief.id }}">
+                        <button class="btn btn-small" style="background: #8a3324;">✕</button>
+                    </form>
+                </div>
+                {% else %}
+                <span style="opacity: 0.5;">-</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" style="text-align: center; padding: 1.5rem; font-style: italic; opacity: 0.7;">
+                This character owns no lands or businesses.
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
 <!-- BOTTOM SECTION: PRIVATE NOTES -->
 <div style="margin-top: 3rem; border-top: 3px solid var(--ink); padding-top: 1rem;">
     <h3>📜 Private Notes & Journals</h3>
@@ -380,6 +464,65 @@
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="submit" class="btn" style="flex: 1;">Grant Item</button>
                 <button type="button" onclick="document.getElementById('addItemModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    
+<!-- MODAL: Change Photo -->
+<div id="photoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 300px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink);">
+        <h3>Portrait URL</h3>
+        <form action="/characters/{{ character._id }}/image" method="POST">
+            <input type="text" name="image_url" placeholder="https://..." value="{{ character.image_url }}" required style="margin-bottom: 1rem;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1">Save</button>
+                <button type="button" onclick="document.getElementById('photoModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Edit Gold (GM) -->
+<div id="goldModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 300px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink);">
+        <h3>Treasury</h3>
+        <form action="/characters/{{ character._id }}/gold/update" method="POST">
+            <label>Set Total Gold Amount:</label>
+            <input type="number" name="amount" value="{{ character.status.gold }}" required style="margin-bottom: 1rem;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1">Update</button>
+                <button type="button" onclick="document.getElementById('goldModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Add Fief (GM) -->
+<div id="fiefModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 350px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink);">
+        <h3>Grant Fief / Enterprise</h3>
+        <form action="/characters/{{ character._id }}/fiefs/add" method="POST">
+            <label>Name</label>
+            <input type="text" name="name" placeholder="Greenwood Mill" required>
+            
+            <label>Type</label>
+            <select name="type" required style="margin-bottom: 10px;">
+                <option value="Caravan">Caravan</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Trade Ship">Trade Ship</option>
+                <option value="Village">Village</option>
+                <option value="City">City</option>
+                <option value="Castle">Castle</option>
+            </select>
+            
+            <label>Weekly Income (Gold)</label>
+            <input type="number" name="income" value="100" required style="margin-bottom: 1rem;">
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1">Grant</button>
+                <button type="button" onclick="document.getElementById('fiefModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
             </div>
         </form>
     </div>

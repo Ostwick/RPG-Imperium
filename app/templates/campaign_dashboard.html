@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+{% block title %}GM Shield: {{ campaign.name }}{% endblock %}
+
+{% block content %}
+<script src="/static/js/campaign.js"></script>
+
+<!-- TOP BAR: Title & Economy -->
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 2rem;">
+    <div>
+        <h1 style="margin: 0;">{{ campaign.name }}</h1>
+        <small>GM Dashboard</small>
+    </div>
+    
+        
+<!-- RIGHT SIDE: Economy & Actions -->
+    <div style="text-align: right; display: flex; gap: 2rem; align-items: flex-start;">
+        <div title="Total Gold in Party Treasury">
+            <div style="font-size: 0.8rem;">Party Treasury</div>
+            <span style="font-size: 1.5rem; color: #c5a004; font-weight: bold;">{{ campaign.party_gold }} 💰</span>
+        </div>
+        
+        <div title="Weekly Maintenance Cost">
+            <div style="font-size: 0.8rem;">Weekly Upkeep</div>
+            <span style="font-size: 1.5rem; color: var(--accent); font-weight: bold;">-{{ campaign.upkeep_cost }} 💰</span>
+        </div>
+        
+        <!-- Actions Column -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <button onclick="document.getElementById('settingsModal').style.display='block'" class="btn btn-small" style="width: 100%;">
+                ⚙️ Settings
+            </button>
+            
+            {% if campaign.upkeep_cost > 0 %}
+            <form action="/campaigns/{{ campaign._id }}/gold/pay_upkeep" method="POST" onsubmit="return confirm('Pay {{ campaign.upkeep_cost }} gold for weekly upkeep?');">
+                <button class="btn btn-small" style="background: #8a3324; width: 100%; font-size: 0.75rem;" title="Deduct upkeep from treasury">
+                    Pay Upkeep
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- End of Top Bar -->
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+    <!-- LEFT COLUMN: Map & Party -->
+    <div>
+        <!-- MAP SECTION -->
+        <div style="margin-bottom: 2rem;">
+            <div id="map-container" style="position: relative; border: 3px solid var(--ink); width: 100%; cursor: crosshair; overflow: hidden; background: #000;">
+                
+                <!-- The Map Image -->
+                <img id="campaign-map" 
+                     src="{{ campaign.map_url }}" 
+                     onclick="openPinModal(event)"
+                     style="width: 100%; height: auto; display: block;">
+                
+                <!-- Pins Overlay -->
+                {% for pin in campaign.map_pins %}
+                    <div class="map-pin {{ pin.type|lower }}" 
+                         style="left: {{ pin.x }}%; top: {{ pin.y }}%;"
+                         title="{{ pin.label }} ({{ pin.type }})">
+                        
+                        <!-- Pin Visual (Dot) -->
+                        <div class="pin-dot"></div>
+                        
+                        <!-- Label (Visible on Hover) -->
+                        <div class="pin-label">
+                            <strong>{{ pin.label }}</strong>
+                            <form action="/campaigns/{{ campaign._id }}/map/pin/delete" method="POST" style="margin-top: 5px;">
+                                <input type="hidden" name="pin_id" value="{{ pin.id }}">
+                                <button class="btn-text" style="color: #ffcccc; font-size: 0.7rem;">[Delete]</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 5px; font-size: 0.8rem; pointer-events: none;">
+                    Click map to add pin
+                </div>
+            </div>
+        </div>
+
+        <!-- PARTY ROSTER -->
+        <h3>Active Party</h3>
+        <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4);">
+            <tr style="background: var(--ink); color: var(--parchment);">
+                <th style="padding: 10px; text-align: left;">Character</th>
+                <th>HP</th>
+                <th>Speed</th>
+                <th>Gold</th>
+                <th>Transfer</th>
+            </tr>
+            {% for char in party %}
+            <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <td style="padding: 10px;">
+                    <a href="/characters/{{ char._id }}" target="_blank" style="font-weight: bold; font-size: 1.1rem;">{{ char.name }}</a>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">{{ char.class_archetype }}</div>
+                </td>
+                <td style="text-align: center;">
+                    <span style="color: {{ 'red' if char.status.hp_current < 5 else 'inherit' }}">
+                        {{ char.status.hp_current }}
+                    </span> / {{ char.status.hp_max }}
+                </td>
+                <td style="text-align: center;">{{ char.status.speed }}%</td>
+                <td style="text-align: center; color: #c5a004; font-weight: bold;">{{ char.status.gold }}</td>
+                <td style="text-align: center;">
+                    <!-- Quick Transfer Buttons -->
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'in')" class="btn btn-small" title="Take from Player">←</button>
+                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'out')" class="btn btn-small" title="Give to Player">→</button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- PENDING REQUESTS -->
+        {% set pending = campaign.members | selectattr("status", "equalto", "Pending") | list %}
+        {% if pending %}
+        <div style="margin-top: 2rem; border: 1px dashed var(--accent); padding: 1rem;">
+            <h4 style="margin-top: 0; color: var(--accent);">Pending Join Requests</h4>
+            <ul>
+                {% for req in pending %}
+                <li style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>{{ req.character_name }}</strong> wants to join.</span>
+                    <form action="/campaigns/{{ campaign._id }}/members/status" method="POST">
+                        <input type="hidden" name="char_id" value="{{ req.character_id }}">
+                        <button name="new_status" value="Accepted" class="btn btn-small">Accept</button>
+                        <button name="new_status" value="Rejected" class="btn btn-small" style="background: #8a3324;">Deny</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- RIGHT COLUMN: Tools & Simulator -->
+    <div>
+        <!-- DICE SIMULATOR -->
+        <div style="background: var(--parchment); border: 2px solid var(--accent); padding: 1.5rem; box-shadow: 5px 5px 15px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; text-align: center; border-bottom: 1px solid var(--accent); padding-bottom: 10px;">⚖️ Test Simulator</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label><strong>1. Select Action</strong></label>
+                <select id="sim-action" onchange="updateSimulator()" style="width: 100%; padding: 8px;">
+                    {% for action in actions %}
+                    <option value="{{ action.name }}" data-attr="{{ action.attribute }}">{{ action.name }}</option>
+                    {% endfor %}
+                </select>
+                <div style="text-align: right; font-size: 0.8rem; color: #666;">
+                    Uses: <strong id="sim-related-attr">Vigor</strong>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label><strong>2. Difficulty Level</strong></label>
+                <select id="sim-difficulty" onchange="updateSimulator()" style="width: 100%; padding: 8px;">
+                    <option value="1">Level 1 (Trivial)</option>
+                    <option value="2">Level 2 (Easy)</option>
+                    <option value="3" selected>Level 3 (Medium)</option>
+                    <option value="4">Level 4 (Hard)</option>
+                    <option value="5">Level 5 (Legendary)</option>
+                </select>
+                <div style="text-align: right; font-size: 0.8rem;">Base DC: <span id="display-base-dc">10</span></div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label><strong>3. Char Attribute Value</strong></label>
+                <input type="number" id="sim-attribute-val" value="10" oninput="updateSimulator()" style="width: 100%; padding: 8px;">
+                <div style="text-align: right; font-size: 0.8rem;">Reduction: -<span id="display-reduction">5</span></div>
+            </div>
+
+            <div style="text-align: center; background: var(--ink); color: var(--parchment); padding: 1rem; border-radius: 4px;">
+                <div>Target Roll (d20)</div>
+                <div id="sim-result" style="font-size: 2.5rem; font-weight: bold; color: #c5a004;">5+</div>
+                <small style="opacity: 0.7;">(Natural 1 always fails)</small>
+            </div>
+        </div>
+
+        <!-- NOTES SCRATCHPAD -->
+        <div style="margin-top: 2rem;">
+            <h4>Session Scratchpad</h4>
+            <textarea style="width: 100%; height: 200px; resize: vertical;" placeholder="Quick notes (not saved in DB for MVP)..."></textarea>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: Settings -->
+<div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 400px; margin: 15vh auto; padding: 2rem; border: 2px solid var(--ink);">
+        <h3>Campaign Settings</h3>
+        <form action="/campaigns/{{ campaign._id }}/settings" method="POST">
+            <label>Map Image URL</label>
+            <input type="text" name="map_url" value="{{ campaign.map_url }}" required>
+            
+            <label>Weekly Upkeep Cost</label>
+            <input type="number" name="upkeep" value="{{ campaign.upkeep_cost }}">
+            
+            <div style="margin-top: 1rem; display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1;">Save</button>
+                <button type="button" onclick="document.getElementById('settingsModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Gold Transfer -->
+<div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 350px; margin: 20vh auto; padding: 2rem; border: 2px solid var(--ink);">
+        <h3 id="transferTitle">Transfer Gold</h3>
+        <p id="transferDesc"></p>
+        
+        <form action="/campaigns/{{ campaign._id }}/gold/transfer" method="POST">
+            <input type="hidden" name="char_id" id="transferCharId">
+            <!-- Amount: Positive = Char to Party. Negative = Party to Char -->
+            <!-- We will handle sign via JS before submit or use two logic paths. 
+                 Simpler: One input for amount, and a hidden field for direction multiplier. -->
+            <input type="hidden" name="direction" id="transferDirection" value="1"> 
+            
+            <label>Amount</label>
+            <input type="number" name="raw_amount" id="transferAmount" required min="1">
+            
+            <div style="margin-top: 1rem; display: flex; gap: 10px;">
+                <button type="button" onclick="submitTransfer()" class="btn" style="flex: 1;">Confirm</button>
+                <button type="button" onclick="document.getElementById('transferModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    
+<!-- MODAL: Add Map Pin -->
+<div id="pinModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
+    <div style="background: var(--parchment); width: 300px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink); position: relative;">
+        <h3>Add Map Pin</h3>
+        <form action="/campaigns/{{ campaign._id }}/map/pin" method="POST">
+            <!-- Hidden inputs for coordinates -->
+            <input type="hidden" name="x" id="pinX">
+            <input type="hidden" name="y" id="pinY">
+            
+            <label>Label</label>
+            <input type="text" name="label" placeholder="Party Location" required autofocus>
+            
+            <label>Type</label>
+            <select name="type" style="margin-bottom: 1rem;">
+                <option value="Party">Party (Blue)</option>
+                <option value="Enemy">Enemy (Red)</option>
+                <option value="Location">Location (Yellow)</option>
+            </select>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1;">Place Pin</button>
+                <button type="button" onclick="document.getElementById('pinModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Pin Container (Absolute positioned relative to map) */
+    .map-pin {
+        position: absolute;
+        transform: translate(-50%, -50%); /* Center the dot on the coordinates */
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* The visual dot */
+    .pin-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 5px rgba(0,0,0,0.8);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .map-pin:hover .pin-dot { transform: scale(1.3); }
+
+    /* Colors based on type */
+    .party .pin-dot { background-color: #2196F3; } /* Blue */
+    .enemy .pin-dot { background-color: #f44336; } /* Red */
+    .location .pin-dot { background-color: #FFC107; } /* Yellow */
+
+    /* The Tooltip/Label (Hidden by default, shown on hover) */
+    .pin-label {
+        display: none;
+        position: absolute;
+        bottom: 20px;
+        background: rgba(0,0,0,0.8);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        text-align: center;
+        z-index: 20;
+    }
+
+    .map-pin:hover .pin-label { display: block; }
+</style>
+
+<script>
+    // Initialize Simulator on Load
+    updateSimulator();
+
+    // Transfer Modal Logic
+    function openTransfer(charId, charName, direction) {
+        document.getElementById('transferModal').style.display = 'block';
+        document.getElementById('transferCharId').value = charId;
+        
+        const title = document.getElementById('transferTitle');
+        const desc = document.getElementById('transferDesc');
+        const dirInput = document.getElementById('transferDirection');
+        
+        if (direction === 'in') {
+            title.innerText = "Collect Taxes / Fees";
+            desc.innerText = `Take gold FROM ${charName} to Party Treasury.`;
+            dirInput.value = "1"; // Positive
+        } else {
+            title.innerText = "Distribute Loot";
+            desc.innerText = `Give gold TO ${charName} from Treasury.`;
+            dirInput.value = "-1"; // Negative
+        }
+    }
+
+    function submitTransfer() {
+        // We need to combine the raw amount with direction
+        const form = document.querySelector('#transferModal form');
+        const raw = document.getElementById('transferAmount').value;
+        const dir = document.getElementById('transferDirection').value;
+        
+        // Create a hidden input for the final signed amount that the backend expects
+        const finalAmount = parseInt(raw) * parseInt(dir);
+        
+        // Remove raw_amount from submission or rename? 
+        // Actually, easiest way is to create a hidden input named 'amount' 
+        const hiddenAmt = document.createElement('input');
+        hiddenAmt.type = 'hidden';
+        hiddenAmt.name = 'amount';
+        hiddenAmt.value = finalAmount;
+        form.appendChild(hiddenAmt);
+        
+        // Remove raw_amount so it doesn't confuse backend (optional if backend ignores extra fields)
+        document.getElementById('transferAmount').removeAttribute('name');
+        
+        form.submit();
+    }
+
+    function openPinModal(event) {
+        const mapImg = document.getElementById('campaign-map');
+        const modal = document.getElementById('pinModal');
+        const inputX = document.getElementById('pinX');
+        const inputY = document.getElementById('pinY');
+
+        // 1. Get click position relative to the image
+        const rect = mapImg.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // 2. Convert to Percentage (0-100)
+        // This ensures pins stay correct if image resizes
+        const xPercent = (x / rect.width) * 100;
+        const yPercent = (y / rect.height) * 100;
+
+        // 3. Set values and show modal
+        inputX.value = xPercent.toFixed(2);
+        inputY.value = yPercent.toFixed(2);
+        
+        modal.style.display = 'block';
+        
+        // Focus label input
+        modal.querySelector('input[name="label"]').focus();
+    }
+</script>
+
+{% endblock %}

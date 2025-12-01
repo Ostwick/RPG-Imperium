@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if page else 'New' }} Archive Entry{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+    <h1>{{ 'Edit' if page else 'New' }} Archive Entry</h1>
+    
+    <form action="{{ '/wiki/' + page._id|string + '/edit' if page else '/wiki/new' }}" method="POST">
+        
+        <div style="margin-bottom: 1rem;">
+            <label>Title</label>
+            <input type="text" name="title" value="{{ page.title if page else '' }}" required placeholder="e.g. The Imperial Calendar">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label>Category</label>
+            <input list="categories" name="category" value="{{ page.category if page else '' }}" required placeholder="e.g. History">
+            <datalist id="categories">
+                <option value="Core Rules">
+                <option value="Factions">
+                <option value="World History">
+                <option value="Geography">
+                <option value="Religion">
+            </datalist>
+            <small style="opacity: 0.7;">Group this page into a section.</small>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label>Content</label>
+            <textarea name="content" rows="20" required style="width: 100%; font-family: 'Courier New', monospace; padding: 1rem;">{{ page.content if page else '' }}</textarea>
+            <small style="opacity: 0.7;">Text maintains indentation and spacing.</small>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="flex: 1;">{{ 'Update Page' if page else 'Publish Page' }}</button>
+            <a href="{{ '/wiki/' + page._id|string if page else '/wiki' }}" class="btn" style="background: #666; text-align: center;">Cancel</a>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

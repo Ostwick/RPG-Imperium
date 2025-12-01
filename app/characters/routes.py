@@ -7,7 +7,8 @@ from app.database import characters_collection, users_collection
 from app.auth.dependencies import get_current_user
 from app.characters.models import (
     CharacterCreate, CharacterInDB, AttributesBlock, 
-    AttributeData, SkillData, Status, Points, Equipment
+    AttributeData, SkillData, Status, Points, Equipment,
+    Fief, FiefType
 )
 from app.game_rules import SKILL_CATEGORIES, GENERIC_SKILL_TREE
 from app.game_rules import calculate_derived_stats, calculate_current_load
@@ -380,5 +381,96 @@ async def unequip_item(
             "$set": {db_field: None},
             "$push": {"inventory": item}
         }
+    )
+    return RedirectResponse(f"/characters/{char_id}", 303)
+
+# --- ACTION: Update Character Image ---
+@router.post("/characters/{char_id}/image")
+async def update_image(
+    char_id: str,
+    image_url: str = Form(...),
+    user: dict = Depends(get_current_user)
+):
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    # Allow Owner or GM
+    await characters_collection.update_one(
+        {"_id": char["_id"]},
+        {"$set": {"image_url": image_url}}
+    )
+    return RedirectResponse(f"/characters/{char_id}", status.HTTP_303_SEE_OTHER)
+
+# --- ACTION: Update Gold Manually (GM/Owner) ---
+@router.post("/characters/{char_id}/gold/update")
+async def update_gold(
+    char_id: str,
+    amount: int = Form(...), # The new total, or we could do delta. Let's do New Total.
+    user: dict = Depends(get_current_user)
+):
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    # Typically only GM edits gold directly, or system rules. Let's allow GM only for raw edit.
+    if not is_gm:
+         return RedirectResponse(f"/characters/{char_id}?error=Only GM can adjust gold directly.", 303)
+
+    await characters_collection.update_one(
+        {"_id": char["_id"]},
+        {"$set": {"status.gold": amount}}
+    )
+    return RedirectResponse(f"/characters/{char_id}", status.HTTP_303_SEE_OTHER)
+
+# --- ACTION: Add Fief (GM Only) ---
+@router.post("/characters/{char_id}/fiefs/add")
+async def add_fief(
+    char_id: str,
+    name: str = Form(...),
+    type: str = Form(...),
+    income: int = Form(...),
+    user: dict = Depends(get_current_user)
+):
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    if not is_gm: return RedirectResponse(f"/characters/{char_id}?error=GM Only", 303)
+    
+    new_fief = Fief(name=name, type=type, income=income)
+    
+    await characters_collection.update_one(
+        {"_id": char["_id"]},
+        {"$push": {"fiefs": new_fief.model_dump()}}
+    )
+    return RedirectResponse(f"/characters/{char_id}", 303)
+
+# --- ACTION: Collect Income (Pay) ---
+@router.post("/characters/{char_id}/fiefs/collect")
+async def collect_fief(
+    char_id: str,
+    fief_id: str = Form(...),
+    user: dict = Depends(get_current_user)
+):
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    if not is_gm: return RedirectResponse(f"/characters/{char_id}?error=GM Only", 303)
+    
+    # Find the fief to get income amount
+    # (In Mongo we have to search the array)
+    fief = next((f for f in char.get("fiefs", []) if f["id"] == fief_id), None)
+    if not fief: return RedirectResponse(f"/characters/{char_id}?error=Fief not found", 303)
+    
+    # Add to Gold
+    await characters_collection.update_one(
+        {"_id": char["_id"]},
+        {"$inc": {"status.gold": fief["income"]}}
+    )
+    return RedirectResponse(f"/characters/{char_id}", 303)
+
+# --- ACTION: Delete Fief ---
+@router.post("/characters/{char_id}/fiefs/delete")
+async def delete_fief(
+    char_id: str,
+    fief_id: str = Form(...),
+    user: dict = Depends(get_current_user)
+):
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    if not is_gm: return RedirectResponse(f"/characters/{char_id}?error=GM Only", 303)
+    
+    await characters_collection.update_one(
+        {"_id": char["_id"]},
+        {"$pull": {"fiefs": {"id": fief_id}}}
     )
     return RedirectResponse(f"/characters/{char_id}", 303)

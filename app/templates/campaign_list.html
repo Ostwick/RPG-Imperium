@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Campaigns{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); margin-bottom: 2rem;">
+    <h1>Campaigns</h1>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    
+    <!-- LEFT COLUMN: My Lists -->
+    <div>
+        
+        <!-- SECTION A: GM Campaigns (Only for GM) -->
+        {% if user.role == 'GM' %}
+            <h3>My Campaigns (GM)</h3>
+            {% for camp in my_campaigns %}
+            <div style="background: rgba(255,255,255,0.4); padding: 1rem; margin-bottom: 1rem; border: 1px solid #8b7d6b;">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong>{{ camp.name }}</strong>
+                    <a href="/campaigns/{{ camp._id }}/dashboard" class="btn btn-small">GM Dashboard</a>
+                </div>
+                <div style="font-size: 0.8rem; margin-top: 5px;">
+                    Players: {{ camp.members | length }} | Gold: {{ camp.party_gold }}
+                </div>
+            </div>
+            {% else %}
+            {% if my_campaigns %}
+                <!-- Case where list is empty but loop ran -->
+            {% else %}
+                <p style="opacity: 0.6; font-style: italic;">You haven't created any campaigns.</p>
+            {% endif %}
+            {% endfor %}
+
+            <!-- Create New (Only Visible to GM) -->
+            <div style="margin-top: 2rem; padding: 1.5rem; border: 2px dashed var(--accent); background: rgba(0,0,0,0.02);">
+                <h4 style="margin-top:0;">Create New Campaign</h4>
+                <form action="/campaigns/new" method="POST">
+                    <input type="text" name="name" placeholder="Campaign Name" required style="margin-bottom: 10px;">
+                    <button class="btn" style="width: 100%;">Create World</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- SECTION B: Player Adventures (Participating) -->
+        <h3>My Adventures (Player)</h3>
+        {% for camp in participating_campaigns %}
+        <div style="background: var(--parchment); padding: 1rem; margin-bottom: 1rem; border: 1px solid #8b7d6b; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>{{ camp.name }}</strong>
+                
+                <!-- Find my status in this campaign -->
+                {% set ns = namespace(status='Unknown') %}
+                {% for m in camp.members %}
+                    {% if m.user_id == user.id %}
+                        {% set ns.status = m.status %}
+                    {% endif %}
+                {% endfor %}
+
+                <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; 
+                             background: {{ '#e6fffa' if ns.status == 'Accepted' else '#fff5f5' }}; 
+                             color: {{ 'green' if ns.status == 'Accepted' else 'red' }}; border: 1px solid currentColor;">
+                    {{ ns.status }}
+                </span>
+            </div>
+            
+            {% if ns.status == 'Accepted' %}
+            <div style="margin-top: 10px; font-size: 0.9rem;">
+                <span style="color: #c5a004; font-weight: bold;">Party Gold: {{ camp.party_gold }}</span>
+            </div>
+            {% else %}
+            <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">
+                Waiting for GM approval...
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+            <p style="opacity: 0.6; font-style: italic;">You are not part of any campaigns yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- RIGHT COLUMN: Available to Join -->
+    <div>
+        <h3>Find a Campaign</h3>
+        {% for camp in available_campaigns %}
+        <div style="background: rgba(0,0,0,0.05); padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--ink);">
+            <strong>{{ camp.name }}</strong>
+            <p style="font-size: 0.8rem; margin: 5px 0;">GM ID: {{ camp.gm_id }}</p>
+            
+            <form action="/campaigns/join" method="POST" style="display: flex; gap: 5px; margin-top: 10px;">
+                <input type="hidden" name="camp_id" value="{{ camp._id }}">
+                <select name="char_id" required style="font-size: 0.9rem; flex-grow: 1;">
+                    <option value="" disabled selected>Select Character</option>
+                    {% for char in my_chars %}
+                    <option value="{{ char._id }}">{{ char.name }} ({{ char.class_archetype }})</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-small">Request Join</button>
+            </form>
+        </div>
+        {% else %}
+        <div style="padding: 2rem; text-align: center; opacity: 0.6; border: 1px dashed #ccc;">
+            <p>No active campaigns found to join.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

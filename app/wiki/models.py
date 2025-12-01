@@ -8,10 +8,10 @@ PyObjectId = Annotated[str, BeforeValidator(str)]
 class WikiPage(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     title: str
-    category: str
-    content: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc))
+    category: str  # e.g. "Core Rules", "Factions", "History"
+    content: str   # Main text content
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Config:
         populate_by_name = True
