@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+{% block title %}{{ character.name }}{% endblock %}
+
+{% block content %}
+
+<!-- TOP BAR: Name & Points -->
+<div
+    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1rem;">
+    <div>
+        <h1 style="margin:0;">{{ character.name }}</h1>
+        <span>{{ character.class_archetype }}</span>
+    </div>
+    <div style="text-align: right;">
+        <div title="Available to spend">
+            <strong>Attr Points:</strong> <span style="color: var(--accent); font-size: 1.2rem;">{{
+                character.points.attribute_points }}</span>
+        </div>
+        <div title="Available to spend">
+            <strong>Skill Points:</strong> <span style="color: var(--gold); font-size: 1.2rem;">{{
+                character.points.skill_points }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- STATS ROW -->
+<div style="display: flex; gap: 1.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 4px; flex-wrap: wrap;">
+    <div>❤️ <strong>HP:</strong> {{ character.status.hp_current }}/{{ character.status.hp_max }}</div>
+    <div>⚡ <strong>Stam:</strong> {{ character.status.stamina }}</div>
+    <div>⚔️ <strong>Atk:</strong> {{ attack }}</div>
+    <div>🛡️ <strong>Def:</strong> {{ defense }}</div>
+    <div>⚖️ <strong>Load:</strong> 
+        <span style="color: {{ 'red' if current_load > max_load else 'inherit' }}">
+            {{ current_load }} / {{ max_load }} kg
+        </span>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+    <!-- LEFT: ATTRIBUTES (Form for Editing) -->
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Attributes</h3>
+            {% if character.points.attribute_points > 0 %}
+            <button type="button" onclick="toggleEdit()" class="btn btn-small" id="editBtn">Edit / Spend Points</button>
+            {% endif %}
+        </div>
+
+        <form action="/characters/{{ character._id }}/attributes/save" method="POST" id="attrForm">
+
+            <!-- Hidden "Points Pool" tracker for JS -->
+            <div class="edit-mode"
+                style="display:none; background: #e3f2fd; color: #0d47a1; padding: 10px; margin-bottom: 10px; border-radius: 4px; text-align: center;">
+                <strong>Points Remaining: </strong>
+                <span id="ui-points-remaining">{{ character.points.attribute_points }}</span>
+            </div>
+
+            <table style="width: 100%;">
+                {% for attr_name, attr_data in character.stats.items() %}
+                <tr>
+                    <td style="padding: 8px;"><strong>{{ attr_name }}</strong></td>
+                    <td style="text-align: right;">
+
+                        <!-- VIEW MODE -->
+                        <span class="view-mode" style="font-weight: bold; font-size: 1.2rem;">{{ attr_data.value
+                            }}</span>
+
+                        <!-- EDIT MODE (Custom Controls) -->
+                        <div class="edit-mode" style="display: none;">
+                            <div style="display: inline-flex; align-items: center; gap: 5px;">
+                                <!-- HIDDEN INPUT (Sent to Server) -->
+                                <input type="hidden" id="input-{{ attr_name }}" name="{{ attr_name }}"
+                                    value="{{ attr_data.value }}" data-original="{{ attr_data.value }}">
+
+                                <!-- MINUS BUTTON -->
+                                <button type="button" class="btn btn-small" style="padding: 2px 8px; background: #ccc;"
+                                    onclick="adjustStat('{{ attr_name }}', -1)">-</button>
+
+                                <!-- VISUAL NUMBER -->
+                                <span id="display-{{ attr_name }}"
+                                    style="font-weight: bold; width: 25px; text-align: center;">
+                                    {{ attr_data.value }}
+                                </span>
+
+                                <!-- PLUS BUTTON -->
+                                <button type="button" id="btn-plus-{{ attr_name }}" class="btn btn-small"
+                                    style="padding: 2px 8px;" onclick="adjustStat('{{ attr_name }}', 1)">+</button>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+                <!-- Skills List Row -->
+                <tr>
+                    <td colspan="2" style="padding-bottom: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            {% for skill_name, skill_data in attr_data.skills.items() %}
+                            <a href="/characters/{{ character._id }}/skills/{{ attr_name }}/{{ skill_name }}"
+                                class="btn btn-small"
+                                style="background: #fff; color: var(--ink); border: 1px solid #ccc; font-size: 0.8rem;">
+                                {{ skill_name }}
+                                <span
+                                    style="background: var(--ink); color: #fff; border-radius: 50%; padding: 0 4px; font-size: 0.7rem;">
+                                    {{ skill_data.nodes_unlocked | length }}
+                                </span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="edit-mode" style="display: none; margin-top: 1rem; text-align: center;">
+                <button type="submit" class="btn" id="confirmBtn">Confirm Changes</button>
+                <button type="button" onclick="cancelEdit()" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- RIGHT: EQUIPMENT & INVENTORY -->
+    <div>
+        <!-- EQUIPMENT SECTION -->
+        <h3 style="border-bottom: 2px solid var(--ink); margin-bottom: 1rem;">Equipment</h3>
+        
+        <div style="background: rgba(255,255,255,0.3); border: 1px solid #8b7d6b; padding: 1rem; margin-bottom: 2rem;">
+            
+                
+<!-- ROW 1: HANDS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                
+                <!-- MAIN HAND -->
+                <div class="equip-slot">
+                    <small>🤚 Main Hand</small>
+                    {% if character.equipment.hand_main %}
+                        <div class="item-box">
+                            <div>
+                                <strong>{{ character.equipment.hand_main.name }}</strong>
+                                <div style="font-size: 0.7rem;">
+                                    Dmg: {{ character.equipment.hand_main.damage }}
+                                    <!-- NEW: Show Qty if Throwing -->
+                                    {% if character.equipment.hand_main.weapon_type == 'Throwing' %}
+                                        Qty: {{ character.equipment.hand_main.quantity }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <form action="/characters/{{ character._id }}/unequip" method="POST">
+                                <input type="hidden" name="slot" value="main">
+                                <button class="btn-text">✕</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="empty-slot">Empty</div>
+                    {% endif %}
+                </div>
+
+                <!-- OFF HAND -->
+                <div class="equip-slot">
+                    <small>✋ Off Hand</small>
+                    {% if character.equipment.hand_off %}
+                        <div class="item-box">
+                            <div>
+                                <strong>{{ character.equipment.hand_off.name }}</strong>
+                                <div style="font-size: 0.7rem;">
+                                    <!-- LOGIC: Throwing vs Weapon vs Ammo vs Shield -->
+                                    {% if character.equipment.hand_off.weapon_type == 'Throwing' %}
+                                        Dmg: {{ character.equipment.hand_off.damage }} Qty: {{ character.equipment.hand_off.quantity }}
+                                    {% elif character.equipment.hand_off.category == 'Weapon' %}
+                                        Dmg: {{ character.equipment.hand_off.damage }}
+                                    {% elif character.equipment.hand_off.category == 'Ammo' %}
+                                        Qty: {{ character.equipment.hand_off.quantity }}
+                                    {% else %}
+                                        Def: {{ character.equipment.hand_off.defense }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <form action="/characters/{{ character._id }}/unequip" method="POST">
+                                <input type="hidden" name="slot" value="off">
+                                <button class="btn-text">✕</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="empty-slot">Empty</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ROW 2: BODY & MOUNT -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                
+                <!-- ARMOR -->
+                <div class="equip-slot">
+                    <small>🛡️ Armor</small>
+                    {% if character.equipment.armor %}
+                        <div class="item-box">
+                            <div>
+                                <strong>{{ character.equipment.armor.name }}</strong>
+                                <div style="font-size: 0.7rem;">Def: {{ character.equipment.armor.defense }}</div>
+                            </div>
+                            <form action="/characters/{{ character._id }}/unequip" method="POST">
+                                <input type="hidden" name="slot" value="armor">
+                                <button class="btn-text">✕</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="empty-slot">Empty</div>
+                    {% endif %}
+                </div>
+
+                <!-- HORSE -->
+                <div class="equip-slot">
+                    <small>🐎 Horse</small>
+                    {% if character.equipment.horse %}
+                        <div class="item-box">
+                            <div>
+                                <strong>{{ character.equipment.horse.name }}</strong>
+                                <div style="font-size: 0.7rem;">+{{ character.equipment.horse.carry_bonus_kg }}kg Load</div>
+                            </div>
+                            <form action="/characters/{{ character._id }}/unequip" method="POST">
+                                <input type="hidden" name="slot" value="horse">
+                                <button class="btn-text">✕</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="empty-slot">Empty</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY SECTION -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="border-bottom: 2px solid var(--ink); margin: 0;">Inventory</h3>
+            {% if is_gm %}
+            <button onclick="document.getElementById('addItemModal').style.display='block'" class="btn btn-small">
+                + GM Add Item
+            </button>
+            {% endif %}
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem;">
+            <tr style="border-bottom: 1px solid var(--ink);">
+                <th style="text-align: left;">Name</th>
+                <th>Qty</th>
+                <th>Wgt</th>
+                <th>Actions</th>
+            </tr>
+            {% for item in character.inventory %}
+            <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <td>
+                    <strong>{{ item.name }}</strong>
+                    <div style="font-size: 0.75rem; color: #666;">{{ item.category }} / {{ item.weapon_type }}</div>
+                </td>
+                <td style="text-align: center;">{{ item.quantity }}</td>
+                <td style="text-align: center;">{{ item.weight }}</td>
+                <td style="text-align: right;">
+                    <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                        
+                        <!-- EQUIP LOGIC -->
+                        <form action="/characters/{{ character._id }}/equip" method="POST">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            
+                            {% if item.category == 'Armor' %}
+                                <input type="hidden" name="slot" value="armor">
+                                <button class="btn btn-small">Equip</button>
+                            {% elif item.category == 'Horse' %}
+                                <input type="hidden" name="slot" value="horse">
+                                <button class="btn btn-small">Equip</button>
+                            {% elif item.category in ['Weapon', 'Ammo'] %}
+                                <!-- Choose Hand -->
+                                <button name="slot" value="main" class="btn btn-small" title="Main Hand">Main</button>
+                                <button name="slot" value="off" class="btn btn-small" title="Off Hand">Off</button>
+                            {% endif %}
+                        </form>
+
+                        <!-- DELETE (GM ONLY) -->
+                        {% if is_gm %}
+                        <form action="/characters/{{ character._id }}/inventory/delete" method="POST" onsubmit="return confirm('GM: Delete item?');">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <button class="btn btn-small" style="background: #8a3324;">🗑</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align: center; padding: 1rem;">Bag is empty.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- END GRID -->
+</div>
+
+<!-- BOTTOM SECTION: PRIVATE NOTES -->
+<div style="margin-top: 3rem; border-top: 3px solid var(--ink); padding-top: 1rem;">
+    <h3>📜 Private Notes & Journals</h3>
+    <form action="/characters/{{ character._id }}/notes" method="POST">
+        <textarea name="notes" rows="8"
+            style="width: 100%; background: rgba(255,255,255,0.5); font-family: 'Courier New', monospace; padding: 1rem; border: 1px dashed var(--accent);">{{ character.private_notes }}</textarea>
+        <div style="text-align: right; margin-top: 10px;">
+            <button type="submit" class="btn">Save Notes</button>
+        </div>
+    </form>
+</div>
+
+<!-- Updated GM Add Item Modal -->
+<div id="addItemModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+    <div style="background: var(--parchment); width: 90%; max-width: 500px; margin: 5vh auto; padding: 2rem; border: 2px solid var(--ink);">
+        <h3>GM Item Creator</h3>
+        <form action="/characters/{{ character._id }}/inventory/add" method="POST">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Name</label>
+                    <input type="text" name="name" required placeholder="Ex: Longsword">
+                </div>
+                <div>
+                     <label>Category</label>
+                    <select name="category" required onchange="updateFormLayout()">
+                        <option value="General">General</option>
+                        <option value="Weapon">Weapon</option>
+                        <option value="Armor">Armor</option>
+                        <option value="Horse">Horse</option>
+                        <option value="Ammo">Ammo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div><label>Weight (kg)</label><input type="number" step="0.1" name="weight" value="1.0"></div>
+                <div><label>Quantity</label><input type="number" name="qty" value="1"></div>
+            </div>
+
+            <!-- Weapon Logic (Hidden for Ammo) -->
+            <div id="weaponTypeFields" style="display: none; border: 1px dashed #666; padding: 10px; margin-top: 10px;">
+                <strong>Weapon Class</strong>
+                <label>Type</label>
+                <select name="weapon_type" onchange="updateWeaponLogic()">
+                    <option value="None">None</option>
+                    <option value="One-Handed">One-Handed</option>
+                    <option value="Two-Handed">Two-Handed</option>
+                    <option value="Polearm">Polearm</option>
+                    <option value="Bow">Bow</option>
+                    <option value="Crossbow">Crossbow</option>
+                    <option value="Throwing">Throwing</option>
+                    <option value="Shield">Shield</option>
+                </select>
+                
+                <div style="margin-top:5px; background: rgba(0,0,0,0.05); padding: 5px;">
+                    <label style="cursor: pointer;">
+                        <input type="checkbox" name="is_two_handed" id="cbTwoHanded" value="true"> 
+                        Is Two-Handed?
+                    </label>
+                    <div style="font-size: 0.7rem; color: #666;">(Auto-set by Type)</div>
+                </div>
+            </div>
+
+            <!-- Damage Stats (Visible for Weapon AND Ammo) -->
+            <div id="damageFields" style="display: none; border: 1px dashed #666; padding: 10px; margin-top: 10px;">
+                <strong>Offensive Stats</strong>
+                <div>
+                    <label>Damage</label>
+                    <input type="number" name="damage" value="0">
+                </div>
+            </div>
+
+            <!-- Defense Stats (Visible for Armor AND Weapon) -->
+            <div id="defenseFields" style="display: none; border: 1px dashed #666; padding: 10px; margin-top: 10px;">
+                <strong>Defensive Stats</strong>
+                <div><label>Defense</label><input type="number" name="defense" value="0"></div>
+            </div>
+
+            <!-- Horse Stats -->
+            <div id="horseFields" style="display: none; border: 1px dashed #666; padding: 10px; margin-top: 10px;">
+                <strong>Mount Stats</strong>
+                <div><label>Max Carry Bonus (kg)</label><input type="number" name="carry_bonus" value="0"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn" style="flex: 1;">Grant Item</button>
+                <button type="button" onclick="document.getElementById('addItemModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Extra Styles for this section -->
+<style>
+    .equip-slot {
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px dashed #8b7d6b;
+        padding: 5px;
+        min-height: 40px;
+    }
+
+    .empty-slot {
+        color: #999;
+        text-align: center;
+        padding-top: 5px;
+        font-size: 0.8rem;
+    }
+
+    .item-box {
+        background: var(--ink);
+        color: var(--parchment);
+        padding: 5px;
+        font-size: 0.85rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-text {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .btn-text:hover {
+        color: var(--accent);
+    }
+</style>
+</div>
+
+<script>
+    // Initial Server Data
+    const INITIAL_POOL = {{ character.points.attribute_points }};
+    let currentPool = INITIAL_POOL;
+
+    // --- Attributes Logic ---
+    function toggleEdit() {
+        document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'block');
+        document.getElementById('editBtn').style.display = 'none';
+        updateUI();
+    }
+
+    function cancelEdit() {
+        document.querySelectorAll('input[type="hidden"]').forEach(input => {
+            input.value = input.dataset.original;
+            document.getElementById('display-' + input.name).innerText = input.value;
+        });
+        currentPool = INITIAL_POOL;
+        document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'inline');
+        document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'none');
+        const editBtn = document.getElementById('editBtn');
+        if (editBtn) editBtn.style.display = 'inline-block';
+    }
+
+    function adjustStat(attrName, delta) {
+        const input = document.getElementById('input-' + attrName);
+        const display = document.getElementById('display-' + attrName);
+        let currentVal = parseInt(input.value);
+        let originalVal = parseInt(input.dataset.original);
+
+        if (delta === 1) {
+            if (currentPool <= 0) return;
+            if (currentVal >= 20) return;
+            currentVal++;
+            currentPool--;
+        } else if (delta === -1) {
+            if (currentVal <= originalVal) return;
+            currentVal--;
+            currentPool++;
+        }
+        input.value = currentVal;
+        display.innerText = currentVal;
+        updateUI();
+    }
+
+    function updateUI() {
+        const uiPoints = document.getElementById('ui-points-remaining');
+        if(uiPoints) uiPoints.innerText = currentPool;
+
+        const allPlusBtns = document.querySelectorAll('[id^="btn-plus-"]');
+        allPlusBtns.forEach(btn => {
+            if (currentPool <= 0) {
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+                btn.style.cursor = "not-allowed";
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            }
+        });
+        const confirmBtn = document.getElementById('confirmBtn');
+        if(confirmBtn) confirmBtn.disabled = (currentPool < 0);
+    }
+
+    // --- GM Item Modal Logic ---
+
+    function updateFormLayout() {
+        const cat = document.querySelector('select[name="category"]').value;
+        
+        // 1. Weapon Logic (Type & Hands): Only for strict "Weapon"
+        // Fix: Use correct ID 'weaponTypeFields'
+        const weaponTypeDiv = document.getElementById('weaponTypeFields');
+        if(weaponTypeDiv) weaponTypeDiv.style.display = (cat === 'Weapon') ? 'block' : 'none';
+        
+        // 2. Damage: Weapon OR Ammo
+        const damageDiv = document.getElementById('damageFields');
+        if(damageDiv) damageDiv.style.display = (cat === 'Weapon' || cat === 'Ammo') ? 'block' : 'none';
+
+        // 3. Defense: Armor OR Weapon
+        const defenseDiv = document.getElementById('defenseFields');
+        if(defenseDiv) defenseDiv.style.display = (cat === 'Armor' || cat === 'Weapon') ? 'block' : 'none';
+        
+        // 4. Horse: Only Horse
+        const horseDiv = document.getElementById('horseFields');
+        if(horseDiv) horseDiv.style.display = (cat === 'Horse') ? 'block' : 'none';
+
+        if (cat === 'Weapon') {
+            updateWeaponLogic();
+        }
+    }
+
+    function updateWeaponLogic() {
+        const type = document.querySelector('select[name="weapon_type"]').value;
+        const cb = document.getElementById('cbTwoHanded');
+        
+        const forcedTwoHanded = ['Two-Handed'];
+        
+        if (forcedTwoHanded.includes(type)) {
+            cb.checked = true;
+            cb.style.accentColor = "#666"; 
+            cb.onclick = function() { return false; }; 
+        } else {
+            cb.checked = false;
+            cb.style.accentColor = null; 
+            cb.onclick = function() { return false; }; 
+        }
+    }
+</script>
+
+{% endblock %}

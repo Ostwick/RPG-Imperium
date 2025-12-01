@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Create Character{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2>New Character Registration</h2>
+        <p style="font-style: italic; opacity: 0.8;">
+            "By order of the Crown, all citizens must be accounted for."
+        </p>
+    </div>
+
+    <form action="/characters/new" method="POST">
+        
+        <!-- Character Name -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="name"><strong>Character Name</strong></label>
+            <input type="text" id="name" name="name" placeholder="e.g. Roland of Highgarden" required autofocus>
+            <small style="color: #666;">Choose a name fitting for the era.</small>
+        </div>
+
+        <!-- Archetype / Class -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="archetype"><strong>Social Class / Archetype</strong></label>
+            <!-- Using a datalist to suggest options but allow custom ones -->
+            <input list="archetypes" id="archetype" name="archetype" placeholder="e.g. Merchant" required>
+            <datalist id="archetypes">
+                <option value="Noble">
+                <option value="Merchant">
+                <option value="Clergy">
+                <option value="Mercenary">
+                <option value="Peasant">
+                <option value="Scholar">
+                <option value="Thief">
+            </datalist>
+        </div>
+
+        <!-- Public Bio -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="bio"><strong>Public Biography</strong></label>
+            <textarea id="bio" name="bio" rows="5" placeholder="Describe your appearance and public reputation..." required></textarea>
+            <small style="color: #666;">This information is visible to other players.</small>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn" style="flex: 1; font-weight: bold;">
+                Inscribe into Records
+            </button>
+            <a href="/dashboard" class="btn" style="background-color: transparent; color: var(--ink); border: 1px solid var(--ink); text-align: center;">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}

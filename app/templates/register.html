@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empire RPG - Register</title>
+    <style>
+        :root {
+            --parchment: #f4e4bc;
+            --ink: #2c241b;
+            --accent: #8a3324;
+            --paper-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        body {
+            background-color: #2b2b2b;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--ink);
+        }
+
+        .container {
+            background-color: var(--parchment);
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            border: 1px solid #d4c4a8;
+            box-shadow: var(--paper-shadow);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .container::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 5px;
+            background: var(--accent);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        h1 {
+            text-align: center;
+            font-variant: small-caps;
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 0.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #8b7d6b;
+            background: rgba(255, 255, 255, 0.5);
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--ink);
+            color: var(--parchment);
+            border: none;
+            font-size: 1.1rem;
+            font-variant: small-caps;
+            cursor: pointer;
+        }
+
+        button:hover { background-color: var(--accent); }
+
+        .links {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .error {
+            color: var(--accent);
+            background: rgba(138, 51, 36, 0.1);
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>New Player Registration</h1>
+
+        {% if error %}
+        <div class="error">⚠ {{ error }}</div>
+        {% endif %}
+
+        <form action="/auth/register" method="POST">
+            <label><strong>Email Address</strong></label>
+            <input type="email" name="email" required placeholder="adventurer@guild.com">
+
+            <label><strong>Password</strong></label>
+            <input type="password" name="password" required placeholder="Minimum 8 characters">
+
+            <label><strong>Confirm Password</strong></label>
+            <input type="password" name="confirm_password" required placeholder="Repeat password">
+
+            <button type="submit">Sign the Ledger</button>
+        </form>
+
+        <div class="links">
+            Already have a seal? <a href="/auth/login">Login here</a>
+        </div>
+    </div>
+
+</body>
+</html>

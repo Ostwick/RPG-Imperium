@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ skill_name }} Tree{% endblock %}
+
+{% block content %}
+
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h1>{{ skill_name }} Mastery</h1>
+    <p>Related Attribute: <strong>{{ attribute }}</strong> (Current: {{ attr_val }})</p>
+    <a href="/characters/{{ character._id }}" class="btn btn-small">← Back to Character</a>
+</div>
+
+<div style="position: relative; max-width: 800px; margin: 0 auto;">
+    <!-- Vertical Line -->
+    <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: rgba(0,0,0,0.1); transform: translateX(-50%); z-index: 0;"></div>
+
+    {% for node in tree_structure %}
+        {% set tier_unlocked = node.tier|string in unlocked %}
+        {% set can_unlock = (character.points.skill_points > 0) and (attr_val >= node.required_attribute_val) %}
+        {% set choice_idx = unlocked[node.tier|string] if tier_unlocked else -1 %}
+
+        <div style="position: relative; z-index: 1; margin-bottom: 2rem; background: var(--parchment); border: 1px solid #8b7d6b; padding: 1rem; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
+                <strong>Tier {{ node.tier }}</strong>
+                <small style="color: {{ 'green' if attr_val >= node.required_attribute_val else 'red' }}">
+                    Req: {{ attribute }} {{ node.required_attribute_val }}
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: center;">
+                {% for choice in node.choices %}
+                    <!-- Loop Index is 1-based, logical index 0-based -->
+                    {% set idx = loop.index0 %}
+                    
+                    <div style="flex: 1; text-align: center; padding: 10px; border: 1px solid #ccc; 
+                                {{ 'background: var(--ink); color: white;' if tier_unlocked and choice_idx == idx else '' }}
+                                {{ 'opacity: 0.5;' if tier_unlocked and choice_idx != idx else '' }}">
+                        
+                        <strong>{{ choice.name }}</strong>
+                        <p style="font-size: 0.8rem;">{{ choice.description }}</p>
+
+                        {% if not tier_unlocked %}
+                            {% if can_unlock %}
+                            <form action="/characters/{{ character._id }}/skills/unlock" method="POST">
+                                <input type="hidden" name="attribute" value="{{ attribute }}">
+                                <input type="hidden" name="skill" value="{{ skill_name }}">
+                                <input type="hidden" name="tier" value="{{ node.tier }}">
+                                <input type="hidden" name="choice_index" value="{{ idx }}">
+                                <button type="submit" class="btn btn-small">Learn (-1 SP)</button>
+                            </form>
+                            {% else %}
+                            <button disabled class="btn btn-small" style="background: #999; cursor: not-allowed;">Locked</button>
+                            {% endif %}
+                        {% elif choice_idx == idx %}
+                            <span style="color: var(--gold);">✔ Learned</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

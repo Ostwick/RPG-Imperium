@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Your Roster</h2>
+    <a href="/characters/new" class="btn">
+        + Create New Character
+    </a>
+</div>
+
+{% if characters %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+        {% for char in characters %}
+        <div class="card" style="border: 1px solid #8b7d6b; padding: 1rem; background: rgba(255,255,255,0.3);">
+            <h3 style="margin-top: 0; color: var(--accent);">{{ char.name }}</h3>
+            <p><strong>Class:</strong> {{ char.class_archetype }}</p>
+            <p><strong>HP:</strong> {{ char.status.hp_current }} / {{ char.status.hp_max }}</p>
+            
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 10px 0;">
+            
+            <a href="/characters/{{ char._id }}" class="btn btn-small">View Sheet</a>
+            
+            {% if user.role == 'GM' %}
+            <span style="color: var(--accent); font-size: 0.8rem; margin-left: 5px;">[GM Edit]</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div style="text-align: center; padding: 3rem; opacity: 0.7;">
+        <p>You have no characters yet.</p>
+        <p>Begin your journey by creating one.</p>
+    </div>
+{% endif %}
+
+{% endblock %}
