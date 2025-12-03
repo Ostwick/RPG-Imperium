@@ -39,8 +39,9 @@
         </div>
 
         <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px; display: flex; align-items: center; gap: 10px;">
-            <span>{{ character.class_archetype }}</span>
-            <!-- NEW BIO BUTTON -->
+            <!-- Display Culture & Archetype -->
+            <span>{{ character.culture }} {{ character.class_archetype }}</span>
+            <!-- BIO BUTTON -->
             <button onclick="document.getElementById('bioModal').style.display='block'" class="btn-text" style="font-size: 0.9rem; border-bottom: 1px dashed var(--accent); cursor: pointer;">
                 📖 Read Bio
             </button>

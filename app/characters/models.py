@@ -86,6 +86,7 @@ class Points(BaseModel):
 class CharacterBase(BaseModel):
     name: str
     class_archetype: str
+    culture: str = "Imperial"
     public_bio: str = ""
     private_notes: Optional[str] = ""
     image_url: Optional[str] = "https://cdn-icons-png.flaticon.com/512/53/53625.png"

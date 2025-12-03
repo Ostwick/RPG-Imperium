@@ -54,6 +54,7 @@ async def create_form(request: Request, user: dict = Depends(get_current_user)):
 async def create_character(
     name: str = Form(...),
     archetype: str = Form(...),
+    culture: str = Form(...),
     bio: str = Form(...),
     user: dict = Depends(get_current_user)
 ):
@@ -76,6 +77,7 @@ async def create_character(
         "user_id": ObjectId(user["id"]),
         "name": name,
         "class_archetype": archetype,
+        "culture": culture,
         "public_bio": bio,
         "private_notes": "",
         "stats": stats_block.model_dump(),
