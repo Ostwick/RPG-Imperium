@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Edit' if page else 'New' }} Archive Entry{% endblock %}
+{% block title %}{{ 'Edit' if page else 'New' }} Entry{% endblock %}
 
 {% block content %}
 <div style="max-width: 700px; margin: 0 auto;">
@@ -12,23 +12,39 @@
             <input type="text" name="title" value="{{ page.title if page else '' }}" required placeholder="e.g. The Imperial Calendar">
         </div>
 
-        <div style="margin-bottom: 1rem;">
-            <label>Category</label>
-            <input list="categories" name="category" value="{{ page.category if page else '' }}" required placeholder="e.g. History">
-            <datalist id="categories">
-                <option value="Core Rules">
-                <option value="Factions">
-                <option value="World History">
-                <option value="Geography">
-                <option value="Religion">
-            </datalist>
-            <small style="opacity: 0.7;">Group this page into a section.</small>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1rem;">
+            <!-- GROUP SELECTION -->
+            <div>
+                <label>Group</label>
+                <select name="group" required>
+                    <option value="" disabled {{ 'selected' if not page else '' }}>Select Group...</option>
+                    
+                    {% set current = page.group if page else '' %}
+                    <option value="Codex of Rules" {{ 'selected' if current == 'Codex of Rules' else '' }}>Codex of Rules</option>
+                    <option value="Imperial Atlas" {{ 'selected' if current == 'Imperial Atlas' else '' }}>Imperial Atlas</option>
+                    <option value="Societas" {{ 'selected' if current == 'Societas' else '' }}>Societas</option>
+                    <option value="Annals of History" {{ 'selected' if current == 'Annals of History' else '' }}>Annals of History</option>
+                    <option value="Dramatis Personae" {{ 'selected' if current == 'Dramatis Personae' else '' }}>Dramatis Personae</option>
+                </select>
+            </div>
+
+            <!-- SUBCATEGORY INPUT -->
+            <div>
+                <label>Subcategory</label>
+                <input list="subcats" name="subcategory" value="{{ page.subcategory if page else '' }}" required placeholder="e.g. Combat">
+                <datalist id="subcats">
+                    <option value="Combat">
+                    <option value="Economy">
+                    <option value="The Church">
+                    <option value="Factions">
+                    <option value="Geography">
+                </datalist>
+            </div>
         </div>
 
         <div style="margin-bottom: 2rem;">
             <label>Content</label>
             <textarea name="content" rows="20" required style="width: 100%; font-family: 'Courier New', monospace; padding: 1rem;">{{ page.content if page else '' }}</textarea>
-            <small style="opacity: 0.7;">Text maintains indentation and spacing.</small>
         </div>
 
         <div style="display: flex; gap: 10px;">

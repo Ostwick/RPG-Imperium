@@ -1,4 +1,10 @@
+from app.database import db
+
 # --- Rules of the Empire ---
+
+# Collection Reference
+skills_rules_collection = db["skills_rules"]
+
 
 ATTRIBUTES = ["Vigor", "Control", "Endurance", "Cunning", "Social", "Intelligence"]
 
@@ -9,15 +15,7 @@ SKILL_CATEGORIES = {
     "Endurance": ["Riding", "Athletics", "Smithing"],
     "Cunning": ["Scouting", "Tactics", "Roguery"],
     "Social": ["Charm", "Leadership", "Trade"],
-    "Intelligence": ["Steward", "Medicine", "Engineering"]
-}
-
-# Calculated Stats Base Values
-BASE_STATS = {
-    "hp": 100,
-    "stamina": 100,
-    "speed": 100, # Percentage
-    "carry_weight_base": 30.0 # Kg
+    "Intelligence": ["Scholar", "Medicine", "Engineering"]
 }
 
 # --- DIFFICULTY RULES ---
@@ -50,81 +48,153 @@ GAME_ACTIONS = [
 # --- Skill Tree Logic ---
 
 def get_node_requirements(tier: int):
-    """
-    Returns the Attribute Value required to unlock this tier.
-    Tier 1 requires Attribute 2.
-    Tier 10 requires Attribute 20.
-    Formula: Tier * 2
-    """
     return tier * 2
 
 def generate_empty_tree():
-    """
-    Generates the 10-node structure.
-    Nodes 1-9: 2 Choices.
-    Node 10: 3 Choices.
-    """
+    """Fallback if a skill isn't defined yet."""
     tree = []
     for i in range(1, 11):
         num_choices = 3 if i == 10 else 2
-        choices = []
-        for c in range(1, num_choices + 1):
-            choices.append({
-                "id": f"choice_{c}",
-                "name": f"Technique {chr(64+c)}", # Generates "Technique A", "Technique B"
-                "description": "Effect placeholder."
-            })
-        
-        tree.append({
-            "tier": i,
-            "required_attribute_val": get_node_requirements(i),
-            "choices": choices
-        })
+        choices = [{"id": f"c{c}", "name": "Placeholder", "description": "TBD"} for c in range(1, num_choices+1)]
+        tree.append({"tier": i, "required_attribute_val": i*2, "choices": choices})
     return tree
 
-# For MVP, every skill uses the generic tree. 
-# Later, you can do: SKILL_TREES["One-Handed"] = [ ... specific data ... ]
-GENERIC_SKILL_TREE = generate_empty_tree()
+async def get_skill_tree(skill_name: str):
+    """Fetches the skill tree from MongoDB."""
+    doc = await skills_rules_collection.find_one({"name": skill_name})
+    if doc:
+        return doc["tree"]
+    
+    # Fallback if not found (Empty Tree)
+    return []
 
-def calculate_derived_stats(character: dict):
-    """
-    Calculates Max Load, Attack, Defense based on stats and equipment.
-    """
+async def calculate_derived_stats(character: dict):
     stats = character.get("stats", {})
     equip = character.get("equipment", {})
     
-    # 1. Max Load Calculation
-    # Base 30kg + Horse Bonus + (Attributes logic can be added here later)
+    # 1. Base Stats
     base_load = 30.0
-    horse_bonus = equip.get("horse", {}).get("carry_bonus_kg", 0) if equip.get("horse") else 0
-    
-    # Example: Endurance could add weight? 
-    # endurance_bonus = stats["Endurance"]["value"] * 2
-    
-    max_load = base_load + horse_bonus
-
-    # 2. Combat Stats
     total_damage = 0
     total_defense = 0
+    base_speed_bonus = 0
     
-    # Armor
-    if equip.get("armor"):
+    bonus_hp = 0
+    bonus_stamina = 0
+    total_crit_bonus = 50 
+
+    # 2. Equipment Stats
+    horse = equip.get("horse")
+    horse_bonus = horse.get("carry_bonus_kg", 0) if horse else 0
+    
+    if equip.get("armor"): 
         total_defense += equip["armor"].get("defense", 0)
-        
+    
+    equipped_types = []
+    
     # Main Hand
-    if equip.get("hand_main"):
-        total_damage += equip["hand_main"].get("damage", 0)
-        total_defense += equip["hand_main"].get("defense", 0) # Shields in main hand?
+    hm = equip.get("hand_main")
+    if hm:
+        total_damage += hm.get("damage", 0)
+        if hm.get("category") == "Weapon": total_defense += hm.get("defense", 0)
+        if hm.get("weapon_type"): equipped_types.append(hm["weapon_type"])
+        if hm.get("category") == "Armor" or hm.get("weapon_type") == "Shield": equipped_types.append("Shield")
 
     # Off Hand
-    if equip.get("hand_off"):
-        total_damage += equip["hand_off"].get("damage", 0) # Dual wielding?
-        total_defense += equip["hand_off"].get("defense", 0) # Shields
+    ho = equip.get("hand_off")
+    if ho:
+        total_damage += ho.get("damage", 0)
+        if ho.get("category") == "Weapon" or ho.get("weapon_type") == "Shield": total_defense += ho.get("defense", 0)
+        if ho.get("weapon_type"): equipped_types.append(ho["weapon_type"])
+        if ho.get("weapon_type") == "Shield": equipped_types.append("Shield")
+    
+    if horse: equipped_types.append("Horse")
+
+    # 3. SKILL MODIFIERS (Async Loop)
+    # Optimization: Fetch all needed trees in parallel or one by one. 
+    # For MVP, one by one is fine, but strictly we should optimize later.
+    
+    for attr_name, attr_data in stats.items():
+        for skill_name, skill_data in attr_data.get("skills", {}).items():
+            unlocked_nodes = skill_data.get("nodes_unlocked", {})
+            if not unlocked_nodes: continue
+
+            # AWAIT the DB call
+            tree_rules = await get_skill_tree(skill_name)
+
+            for tier_str, choice_idx in unlocked_nodes.items():
+                tier = int(tier_str)
+                node_rule = next((n for n in tree_rules if n["tier"] == tier), None)
+                
+                if node_rule and 0 <= choice_idx < len(node_rule["choices"]):
+                    choice = node_rule["choices"][choice_idx]
+                    modifiers = choice.get("modifiers", [])
+                    
+                    for mod in modifiers:
+                        condition = mod.get("condition", "always")
+                        apply = False
+                        
+                        if condition == "always": apply = True
+                        elif condition.startswith("equip:"):
+                            req_type = condition.split(":")[1]
+                            if req_type in equipped_types: apply = True
+                        
+                        if apply:
+                            val = mod["value"]
+                            stat = mod["stat"]
+                            
+                            if stat == "damage": total_damage += val
+                            if stat == "defense": total_defense += val
+                            if stat == "speed": base_speed_bonus += val # Add to MAX Speed
+                            if stat == "max_load": base_load += val
+                            if stat == "hp_max": bonus_hp += val
+                            if stat == "stamina": bonus_stamina += val
+                            if stat == "critical_damage": total_crit_bonus += val
+
+    # 4. FINAL CALCULATIONS
+    max_load = base_load + horse_bonus
+    
+    # Calculate Current Load
+    inv_weight = sum([i["weight"] * i["quantity"] for i in character.get("inventory", [])])
+    equip_weight = 0
+    if equip.get("armor"): equip_weight += equip["armor"]["weight"]
+    if hm: equip_weight += hm["weight"]
+    if ho: equip_weight += ho["weight"]
+    current_load = round(inv_weight + equip_weight, 1)
+
+    # 5. SPEED & ENCUMBRANCE LOGIC
+    # Base Speed is 100% + Skills (e.g. 105%)
+    max_speed = 100 + base_speed_bonus
+    
+    # Calculate Ratio
+    if max_load > 0:
+        load_ratio = current_load / max_load
+    else:
+        load_ratio = 1.1 # Automatic overburden if max_load is 0
+
+    # Apply Penalties
+    speed_multiplier = 1.0
+    
+    if load_ratio <= 0.30:
+        speed_multiplier = 1.0
+    elif load_ratio <= 0.60:
+        speed_multiplier = 0.8
+    elif load_ratio <= 0.90:
+        speed_multiplier = 0.6
+    else:
+        speed_multiplier = 0.4 # Over 90%
+        
+    current_speed = int(max_speed * speed_multiplier)
 
     return {
         "max_load": max_load,
+        "current_load": current_load,
         "attack": total_damage,
-        "defense": total_defense
+        "defense": total_defense,
+        "max_speed": max_speed,        # <--- For UI
+        "current_speed": current_speed,# <--- Actual Speed
+        "bonus_hp": bonus_hp,
+        "bonus_stamina": bonus_stamina,
+        "crit_bonus": total_crit_bonus
     }
 
 def calculate_current_load(character: dict):

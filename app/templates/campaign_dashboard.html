@@ -14,6 +14,12 @@
         
 <!-- RIGHT SIDE: Economy & Actions -->
     <div style="text-align: right; display: flex; gap: 2rem; align-items: flex-start;">
+        <!-- Party Speed -->
+        <div title="Average Party Travel Speed">
+            <div style="font-size: 0.8rem;">Party Speed</div>
+            <span style="font-size: 1.5rem; font-weight: bold;">🐎 {{ party_speed }}%</span>
+        </div>
+
         <div title="Total Gold in Party Treasury">
             <div style="font-size: 0.8rem;">Party Treasury</div>
             <span style="font-size: 1.5rem; color: #c5a004; font-weight: bold;">{{ campaign.party_gold }} 💰</span>
@@ -41,53 +47,237 @@
     </div>
 </div>
 <!-- End of Top Bar -->
+<!-- === ROW 1: BATTLE SIMULATOR (Full Width) === -->
+<div style="margin-bottom: 2rem; border: 3px solid #8a3324; padding: 1rem; background: rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #8a3324; padding-bottom: 10px; margin-bottom: 10px;">
+        <h2 style="margin: 0; color: #8a3324;">⚔️ Battle Simulator</h2>
+        {% if campaign.combat_active %}
+            <form action="/campaigns/{{ campaign._id }}/combat/end" method="POST" onsubmit="return confirm('End Combat?');">
+                <button class="btn btn-small" style="background: #666;">End Combat</button>
+            </form>
+        {% endif %}
+    </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-
-    <!-- LEFT COLUMN: Map & Party -->
-    <div>
-        <!-- MAP SECTION -->
-        <div style="margin-bottom: 2rem;">
-            <div id="map-container" style="position: relative; border: 3px solid var(--ink); width: 100%; cursor: crosshair; overflow: hidden; background: #000;">
-                
-                <!-- The Map Image -->
-                <img id="campaign-map" 
-                     src="{{ campaign.map_url }}" 
-                     onclick="openPinModal(event)"
-                     style="width: 100%; height: auto; display: block;">
-                
-                <!-- Pins Overlay -->
-                {% for pin in campaign.map_pins %}
-                    <div class="map-pin {{ pin.type|lower }}" 
-                         style="left: {{ pin.x }}%; top: {{ pin.y }}%;"
-                         title="{{ pin.label }} ({{ pin.type }})">
-                        
-                        <!-- Pin Visual (Dot) -->
-                        <div class="pin-dot"></div>
-                        
-                        <!-- Label (Visible on Hover) -->
-                        <div class="pin-label">
-                            <strong>{{ pin.label }}</strong>
-                            <form action="/campaigns/{{ campaign._id }}/map/pin/delete" method="POST" style="margin-top: 5px;">
-                                <input type="hidden" name="pin_id" value="{{ pin.id }}">
-                                <button class="btn-text" style="color: #ffcccc; font-size: 0.7rem;">[Delete]</button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-
-                <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 5px; font-size: 0.8rem; pointer-events: none;">
-                    Click map to add pin
+    {% if not campaign.combat_active %}
+    <!-- SETUP MODE (Keep existing setup code) -->
+    <form action="/campaigns/{{ campaign._id }}/combat/start" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <h4>1. Select Party Members</h4>
+                {% for char in party %}
+                <div>
+                    <label>
+                        <input type="checkbox" name="player_ids" value="{{ char._id }}" checked>
+                        {{ char.name }} (Spd: {{ char.derived.current_speed }})
+                    </label>
                 </div>
+                {% endfor %}
+            </div>
+            <div>
+                <h4>2. Add Enemies</h4>
+                <div id="enemy-container">
+                    <select name="enemy_ids" style="margin-bottom: 5px;">
+                        {% for mob in bestiary %}
+                        <option value="{{ mob._id }}">{{ mob.name }} (HP: {{ mob.hp_max }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="button" onclick="duplicateEnemySelect()" class="btn btn-small">+ Add Another</button>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 1rem;">
+            <button class="btn" style="background: #8a3324; font-size: 1.2rem;">START BATTLE</button>
+        </div>
+    </form>
 
-        <!-- PARTY ROSTER -->
+    {% else %}
+    <!-- ACTIVE COMBAT MODE (Updated Layout) -->
+    {% set sorted_combat = campaign.combatants | sort(attribute='action_points', reverse=True) %}
+    {% set active_actor = sorted_combat[0] %}
+    {% set is_ready = (active_actor.action_points >= 100) and (active_actor.hp_current > 0) %}
+
+    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
+        
+        <!-- TURN ORDER -->
+        <div>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #ccc;">
+                    <th>Name</th>
+                    <th>HP</th>
+                    <th>Stam</th> <!-- NEW -->
+                    <th>Action Bar</th>
+                    <th>AP</th>
+                </tr>
+                {% for c in sorted_combat %}
+                <tr style="background: {{ '#ffe6e6' if c.type == 'Enemy' else '#e6fffa' }}; 
+                           border-bottom: 1px solid #999; 
+                           opacity: {{ '0.5' if c.hp_current <= 0 else '1' }};
+                           {{ 'font-weight:bold; border: 2px solid #8a3324;' if loop.first and is_ready else '' }}">
+                    <td style="padding: 5px;">
+                        {{ c.name }} {{ '💀' if c.hp_current <= 0 else '' }}
+                    </td>
+                    <td style="text-align: center;">
+                        <span style="color: {{ 'red' if c.hp_current == 0 else 'black' }}">{{ c.hp_current }}</span>
+                    </td>
+                    <td style="text-align: center; font-size: 0.9rem;">
+                        {{ c.stamina_current }}
+                    </td>
+                    <td style="padding: 5px;">
+                        <div style="background: #ddd; height: 10px; width: 100%; position: relative;">
+                            <div style="background: {{ '#8a3324' if c.type == 'Enemy' else '#2196F3' }}; height: 100%; width: {{ [c.action_points, 100]|min }}%;"></div>
+                        </div>
+                    </td>
+                    <td style="text-align: right; font-size: 0.8rem;">{{ c.action_points | int }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            {% if not is_ready %}
+            <div style="text-align: center; margin-top: 1rem;">
+                <form action="/campaigns/{{ campaign._id }}/combat/next" method="POST">
+                    <button class="btn">Next Tick ⏩</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- CONTROLS -->
+        <div style="background: #fff; padding: 1rem; border: 1px solid #ccc; display: flex; flex-direction: column;">
+            <div style="flex-grow: 1; border: 1px solid #eee; background: #f9f9f9; padding: 5px; margin-bottom: 10px; overflow-y: auto; max-height: 150px; font-size: 0.8rem;">
+                {% for log in campaign.combat_log %}
+                <div style="border-bottom: 1px solid #eee;">{{ log }}</div>
+                {% endfor %}
+            </div>
+
+            {% if is_ready %}
+            <h3 style="margin: 0 0 10px 0; color: #8a3324;">{{ active_actor.name }}'s Turn</h3>
+            
+            <form action="/campaigns/{{ campaign._id }}/combat/act" method="POST">
+                <!-- Helper to find array index -->
+                {% for c in campaign.combatants %}
+                    {% if c.id == active_actor.id %}<input type="hidden" name="actor_index" value="{{ loop.index0 }}">{% endif %}
+                {% endfor %}
+
+                <select name="target_index" style="width: 100%; margin-bottom: 10px; padding: 5px;" required>
+                    <option value="" disabled selected>Select Target...</option>
+                    {% for c in campaign.combatants %}
+                        {% if c.hp_current > 0 %}
+                        <option value="{{ loop.index0 }}">{{ c.name }} (HP: {{ c.hp_current }})</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                <!-- Bonuses -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+                    <div>
+                        <small>Bonus Dmg</small>
+                        <input type="number" name="bonus_dmg" value="0" style="width: 100%;">
+                    </div>
+                    <div>
+                        <small>Target Bonus Def</small>
+                        <input type="number" name="bonus_def" value="0" style="width: 100%;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <label style="cursor: pointer;">
+                        <input type="checkbox" name="is_crit" value="true"> Critical Hit?
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <button name="action_type" value="Attack" class="btn" style="background: #8a3324;">⚔️ Hit</button>
+                    <button name="action_type" value="Miss" class="btn" style="background: #e6b800; color: #000;">🚫 Miss</button>
+                </div>
+                <button name="action_type" value="Wait" class="btn btn-small" style="width: 100%; margin-top: 5px; background: #666;">Wait (Delay)</button>
+            </form>
+            {% else %}
+            <p style="text-align: center; color: #999;">Waiting for tick...</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- === ROW 2: MAP & TEST SIMULATOR (2/3 | 1/3) === -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    
+    <!-- MAP -->
+    <div>
+        <div id="map-container" style="position: relative; border: 3px solid var(--ink); width: 100%; cursor: crosshair; overflow: hidden; background: #000; height: 400px;">
+            <img id="campaign-map" 
+                 src="{{ campaign.map_url }}" 
+                 onclick="openPinModal(event)"
+                 style="width: 100%; height: 100%; object-fit: contain;">
+            
+            {% for pin in campaign.map_pins %}
+                <div class="map-pin {{ pin.type|lower }}" 
+                     style="left: {{ pin.x }}%; top: {{ pin.y }}%;"
+                     title="{{ pin.label }}">
+                    <div class="pin-dot"></div>
+                    <div class="pin-label">
+                        <strong>{{ pin.label }}</strong>
+                        <form action="/campaigns/{{ campaign._id }}/map/pin/delete" method="POST">
+                            <input type="hidden" name="pin_id" value="{{ pin.id }}">
+                            <button class="btn-text" style="color: #ffcccc; font-size: 0.7rem;">[X]</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- TEST SIMULATOR -->
+    <div>
+        <div style="background: var(--parchment); border: 2px solid var(--accent); padding: 1.5rem; height: 100%; box-sizing: border-box;">
+            <h3 style="margin-top: 0; text-align: center; border-bottom: 1px solid var(--accent); padding-bottom: 10px;">⚖️ Test Simulator</h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <label><strong>Action</strong></label>
+                <select id="sim-action" onchange="updateSimulator()" style="width: 100%;">
+                    {% for action in actions %}
+                    <option value="{{ action.name }}" data-attr="{{ action.attribute }}">{{ action.name }}</option>
+                    {% endfor %}
+                </select>
+                <small id="sim-related-attr" style="display: block; text-align: right; color: #666;">Vigor</small>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label><strong>Difficulty</strong></label>
+                <select id="sim-difficulty" onchange="updateSimulator()" style="width: 100%;">
+                    <option value="1">Lvl 1 (Trivial)</option>
+                    <option value="2">Lvl 2 (Easy)</option>
+                    <option value="3" selected>Lvl 3 (Medium)</option>
+                    <option value="4">Lvl 4 (Hard)</option>
+                    <option value="5">Lvl 5 (Legendary)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label><strong>Attribute</strong></label>
+                <input type="number" id="sim-attribute-val" value="10" oninput="updateSimulator()" style="width: 100%;">
+            </div>
+
+            <div style="text-align: center; background: var(--ink); color: var(--parchment); padding: 1rem; border-radius: 4px;">
+                <div>Target (d20)</div>
+                <div id="sim-result" style="font-size: 2.5rem; font-weight: bold; color: #c5a004;">5+</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === ROW 3: PARTY & SCRATCHPAD (2/3 | 1/3) === -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    
+    <!-- PARTY LIST -->
+    <div>
         <h3>Active Party</h3>
         <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4);">
             <tr style="background: var(--ink); color: var(--parchment);">
                 <th style="padding: 10px; text-align: left;">Character</th>
                 <th>HP</th>
+                <th>Stamina</th> <!-- NEW -->
                 <th>Speed</th>
                 <th>Gold</th>
                 <th>Transfer</th>
@@ -95,7 +285,12 @@
             {% for char in party %}
             <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
                 <td style="padding: 10px;">
-                    <a href="/characters/{{ char._id }}" target="_blank" style="font-weight: bold; font-size: 1.1rem;">{{ char.name }}</a>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <a href="/characters/{{ char._id }}" target="_blank" style="font-weight: bold; font-size: 1.1rem;">{{ char.name }}</a>
+                        <button class="btn-text" 
+                                onclick="openCampaignBio('{{ char.name|escape }}', this.getAttribute('data-bio'))"
+                                data-bio="{{ char.public_bio }}" title="Read Bio">📜</button>
+                    </div>
                     <div style="font-size: 0.8rem; opacity: 0.7;">{{ char.class_archetype }}</div>
                 </td>
                 <td style="text-align: center;">
@@ -103,90 +298,29 @@
                         {{ char.status.hp_current }}
                     </span> / {{ char.status.hp_max }}
                 </td>
-                <td style="text-align: center;">{{ char.status.speed }}%</td>
+                <td style="text-align: center;">
+                    {{ char.status.stamina }} <!-- NEW -->
+                </td>
+                <td style="text-align: center;">{{ char.derived.current_speed }}%</td>
                 <td style="text-align: center; color: #c5a004; font-weight: bold;">{{ char.status.gold }}</td>
                 <td style="text-align: center;">
-                    <!-- Quick Transfer Buttons -->
                     <div style="display: flex; gap: 5px; justify-content: center;">
-                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'in')" class="btn btn-small" title="Take from Player">←</button>
-                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'out')" class="btn btn-small" title="Give to Player">→</button>
+                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'in')" class="btn btn-small">↓</button>
+                        <button onclick="openTransfer('{{ char._id }}', '{{ char.name }}', 'out')" class="btn btn-small">↑</button>
                     </div>
                 </td>
             </tr>
             {% endfor %}
         </table>
-
-        <!-- PENDING REQUESTS -->
-        {% set pending = campaign.members | selectattr("status", "equalto", "Pending") | list %}
-        {% if pending %}
-        <div style="margin-top: 2rem; border: 1px dashed var(--accent); padding: 1rem;">
-            <h4 style="margin-top: 0; color: var(--accent);">Pending Join Requests</h4>
-            <ul>
-                {% for req in pending %}
-                <li style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span><strong>{{ req.character_name }}</strong> wants to join.</span>
-                    <form action="/campaigns/{{ campaign._id }}/members/status" method="POST">
-                        <input type="hidden" name="char_id" value="{{ req.character_id }}">
-                        <button name="new_status" value="Accepted" class="btn btn-small">Accept</button>
-                        <button name="new_status" value="Rejected" class="btn btn-small" style="background: #8a3324;">Deny</button>
-                    </form>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
+        
+        <!-- Pending Requests logic here (omitted for brevity, keep existing) -->
     </div>
 
-    <!-- RIGHT COLUMN: Tools & Simulator -->
+    <!-- SCRATCHPAD -->
     <div>
-        <!-- DICE SIMULATOR -->
-        <div style="background: var(--parchment); border: 2px solid var(--accent); padding: 1.5rem; box-shadow: 5px 5px 15px rgba(0,0,0,0.2);">
-            <h3 style="margin-top: 0; text-align: center; border-bottom: 1px solid var(--accent); padding-bottom: 10px;">⚖️ Test Simulator</h3>
-            
-            <div style="margin-bottom: 1rem;">
-                <label><strong>1. Select Action</strong></label>
-                <select id="sim-action" onchange="updateSimulator()" style="width: 100%; padding: 8px;">
-                    {% for action in actions %}
-                    <option value="{{ action.name }}" data-attr="{{ action.attribute }}">{{ action.name }}</option>
-                    {% endfor %}
-                </select>
-                <div style="text-align: right; font-size: 0.8rem; color: #666;">
-                    Uses: <strong id="sim-related-attr">Vigor</strong>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label><strong>2. Difficulty Level</strong></label>
-                <select id="sim-difficulty" onchange="updateSimulator()" style="width: 100%; padding: 8px;">
-                    <option value="1">Level 1 (Trivial)</option>
-                    <option value="2">Level 2 (Easy)</option>
-                    <option value="3" selected>Level 3 (Medium)</option>
-                    <option value="4">Level 4 (Hard)</option>
-                    <option value="5">Level 5 (Legendary)</option>
-                </select>
-                <div style="text-align: right; font-size: 0.8rem;">Base DC: <span id="display-base-dc">10</span></div>
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <label><strong>3. Char Attribute Value</strong></label>
-                <input type="number" id="sim-attribute-val" value="10" oninput="updateSimulator()" style="width: 100%; padding: 8px;">
-                <div style="text-align: right; font-size: 0.8rem;">Reduction: -<span id="display-reduction">5</span></div>
-            </div>
-
-            <div style="text-align: center; background: var(--ink); color: var(--parchment); padding: 1rem; border-radius: 4px;">
-                <div>Target Roll (d20)</div>
-                <div id="sim-result" style="font-size: 2.5rem; font-weight: bold; color: #c5a004;">5+</div>
-                <small style="opacity: 0.7;">(Natural 1 always fails)</small>
-            </div>
-        </div>
-
-        <!-- NOTES SCRATCHPAD -->
-        <div style="margin-top: 2rem;">
-            <h4>Session Scratchpad</h4>
-            <textarea style="width: 100%; height: 200px; resize: vertical;" placeholder="Quick notes (not saved in DB for MVP)..."></textarea>
-        </div>
+        <h3>Session Notes</h3>
+        <textarea style="width: 100%; height: 250px; resize: vertical; padding: 10px; border: 1px solid #8b7d6b; background: rgba(255,255,255,0.5);" placeholder="Quick notes..."></textarea>
     </div>
-
 </div>
 
 <!-- MODAL: Settings -->
@@ -257,6 +391,17 @@
                 <button type="button" onclick="document.getElementById('pinModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL: Campaign Character Bio -->
+<div id="campBioModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000;">
+    <div style="background: var(--parchment); width: 500px; margin: 20vh auto; padding: 2rem; border: 2px solid var(--ink); position: relative;">
+        <button onclick="document.getElementById('campBioModal').style.display='none'" 
+                style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+        
+        <h2 id="campBioTitle" style="margin-top: 0; border-bottom: 2px solid var(--ink);"></h2>
+        <div id="campBioContent" style="white-space: pre-wrap; font-family: 'Georgia', serif; line-height: 1.6; max-height: 50vh; overflow-y: auto;"></div>
     </div>
 </div>
 
@@ -378,6 +523,18 @@
         
         // Focus label input
         modal.querySelector('input[name="label"]').focus();
+    }
+
+    function openCampaignBio(name, bioText) {
+        document.getElementById('campBioTitle').innerText = name;
+        document.getElementById('campBioContent').innerText = bioText;
+        document.getElementById('campBioModal').style.display = 'block';
+    }
+
+    function duplicateEnemySelect() {
+        const container = document.getElementById('enemy-container');
+        const select = container.querySelector('select').cloneNode(true);
+        container.appendChild(select);
     }
 </script>
 

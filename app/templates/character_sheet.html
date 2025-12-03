@@ -3,6 +3,7 @@
 
 {% block content %}
 
+    
 <!-- HEADER: Photo, Details, Points -->
 <div style="display: flex; gap: 2rem; align-items: center; border-bottom: 3px solid var(--ink); padding-bottom: 1.5rem; margin-bottom: 2rem;">
     
@@ -12,7 +13,6 @@
              style="width: 100%; height: 100%; object-fit: cover; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.3); background: #333;"
              onerror="this.src='https://i.imgur.com/62jO8iC.png'">
         
-        <!-- Edit Photo Button (Owner/GM) -->
         <button onclick="document.getElementById('photoModal').style.display='block'" 
                 title="Change Portrait"
                 style="position: absolute; bottom: -5px; right: -5px; background: var(--ink); color: #fff; border: 1px solid var(--parchment); border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
@@ -22,9 +22,28 @@
 
     <!-- 2. Character Info -->
     <div style="flex-grow: 1;">
-        <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: 1px;">{{ character.name }}</h1>
-        <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px;">
-            {{ character.class_archetype }}
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: 1px;">{{ character.name }}</h1>
+            
+            <!-- LEVEL DISPLAY -->
+            <div style="background: var(--ink); color: var(--parchment); padding: 5px 10px; border-radius: 4px; font-weight: bold; font-variant: small-caps;">
+                Level {{ character.status.level }}
+            </div>
+
+            <!-- LEVEL UP BUTTON -->
+            {% if is_gm and character.status.level < 20 %}
+            <form action="/characters/{{ character._id }}/levelup" method="POST" onsubmit="return confirm('Level Up {{ character.name }} to {{ character.status.level + 1 }}?');">
+                <button class="btn btn-small" title="Grant Level Up" style="background: var(--accent); border: 1px solid var(--ink);">▲</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px; display: flex; align-items: center; gap: 10px;">
+            <span>{{ character.class_archetype }}</span>
+            <!-- NEW BIO BUTTON -->
+            <button onclick="document.getElementById('bioModal').style.display='block'" class="btn-text" style="font-size: 0.9rem; border-bottom: 1px dashed var(--accent); cursor: pointer;">
+                📖 Read Bio
+            </button>
         </div>
         
         <!-- Gold Display -->
@@ -54,12 +73,53 @@
 </div>
 
 <!-- STATS ROW -->
-<div style="display: flex; gap: 1.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 4px; flex-wrap: wrap;">
-    <div>❤️ <strong>HP:</strong> {{ character.status.hp_current }}/{{ character.status.hp_max }}</div>
-    <div>⚡ <strong>Stam:</strong> {{ character.status.stamina }}</div>
-    <div>⚔️ <strong>Atk:</strong> {{ attack }}</div>
-    <div>🛡️ <strong>Def:</strong> {{ defense }}</div>
-    <div>⚖️ <strong>Load:</strong> 
+<div style="display: flex; justify-content: space-around; margin-bottom: 2rem; background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 4px; border: 1px dashed #8b7d6b; flex-wrap: wrap; gap: 15px;">
+    
+    <!-- HP -->
+    <div title="Health Points" style="display: flex; align-items: center; gap: 5px;">
+        <span style="font-size: 1.2rem;">❤️</span> 
+        <strong>HP:</strong> {{ character.status.hp_current }} / {{ character.status.hp_max }}
+        {% if is_gm %}
+        <button onclick="openStatusModal()" class="btn-text" style="color: var(--accent); font-size: 0.8rem;">(Edit)</button>
+        {% endif %}
+    </div>
+
+    <!-- Stamina -->
+    <div title="Stamina">
+        <span style="font-size: 1.2rem;">⚡</span> 
+        <strong>Stam:</strong> {{ character.status.stamina }} / {{ max_stamina }}
+    </div>
+
+        
+    <!-- Speed -->
+    <div title="Current Speed (Max: {{ max_speed }}%)">
+        <span style="font-size: 1.2rem;">🐎</span> 
+        <strong>Spd:</strong> 
+        <span style="color: {{ 'red' if speed < max_speed else 'inherit' }}">
+            {{ speed }}%
+        </span>
+    </div>
+
+    <!-- Combat Stats -->
+    <div title="Calculated Attack Power">
+        <span style="font-size: 1.2rem;">⚔️</span> 
+        <strong>Atk:</strong> {{ attack }}
+    </div>
+    
+    <div title="Critical Damage Bonus">
+        <span style="font-size: 1.2rem;">💥</span> 
+        <strong>Crit:</strong> +{{ crit_bonus }}%
+    </div>
+    
+    <div title="Calculated Defense">
+        <span style="font-size: 1.2rem;">🛡️</span> 
+        <strong>Def:</strong> {{ defense }}
+    </div>
+    
+    <!-- Weight -->
+    <div title="Current Weight / Max Weight">
+        <span style="font-size: 1.2rem;">⚖️</span> 
+        <strong>Load:</strong> 
         <span style="color: {{ 'red' if current_load > max_load else 'inherit' }}">
             {{ current_load }} / {{ max_load }} kg
         </span>
@@ -528,6 +588,40 @@
     </div>
 </div>
 
+<!-- Modal for Status -->
+<div id="statusModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 300px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink);">
+        <h3>Update Status</h3>
+        <form action="/characters/{{ character._id }}/status/update" method="POST">
+            
+            <label>Current HP (Max: {{ character.status.hp_max }})</label>
+            <input type="number" name="hp_current" value="{{ character.status.hp_current }}" required style="margin-bottom: 1rem;">
+
+            <label>Current Stamina (Max: {{ max_stamina }})</label>
+            <input type="number" name="stamina_current" value="{{ character.status.stamina }}" required style="margin-bottom: 1rem;">
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="flex: 1">Update</button>
+                <button type="button" onclick="document.getElementById('statusModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    
+<!-- MODAL: Public Bio -->
+<div id="bioModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="background: var(--parchment); width: 80%; max-width: 600px; margin: 15vh auto; padding: 2rem; border: 2px solid var(--ink); box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative;">
+        <button onclick="document.getElementById('bioModal').style.display='none'" 
+                style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+        
+        <h2 style="margin-top: 0; border-bottom: 2px solid var(--ink);">Biography</h2>
+        <div style="white-space: pre-wrap; font-family: 'Georgia', serif; line-height: 1.6; max-height: 60vh; overflow-y: auto;">
+            {{ character.public_bio }}
+        </div>
+    </div>
+</div>
+
 <!-- Extra Styles for this section -->
 <style>
     .equip-slot {
@@ -676,6 +770,10 @@
             cb.style.accentColor = null; 
             cb.onclick = function() { return false; }; 
         }
+    }
+
+    function openStatusModal() {
+        document.getElementById('statusModal').style.display = 'block';
     }
 </script>
 

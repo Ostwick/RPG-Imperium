@@ -67,6 +67,7 @@ class AttributesBlock(BaseModel):
 
 # --- Status ---
 class Status(BaseModel):
+    level: int = 1
     hp_current: int = 100
     hp_max: int = 100
     stamina: int = 100
@@ -87,7 +88,7 @@ class CharacterBase(BaseModel):
     class_archetype: str
     public_bio: str = ""
     private_notes: Optional[str] = ""
-    image_url: Optional[str] = "https://i.imgur.com/62jO8iC.png"
+    image_url: Optional[str] = "https://cdn-icons-png.flaticon.com/512/53/53625.png"
 
 class CharacterCreate(CharacterBase):
     pass

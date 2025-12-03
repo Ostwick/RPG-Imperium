@@ -12,25 +12,42 @@
     {% endif %}
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+<!-- Newspaper Layout: 2 Columns that flow naturally -->
+<div style="column-count: 2; column-gap: 2rem;">
     
-    {% for category, pages in library.items() %}
-    <div style="background: var(--parchment); border: 1px solid #8b7d6b; padding: 1.5rem; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-        <h3 style="color: var(--accent); border-bottom: 1px dashed var(--ink); padding-bottom: 5px; margin-top: 0;">
-            {{ category }}
-        </h3>
-        <ul style="list-style: none; padding: 0;">
-            {% for page in pages %}
-            <li style="margin-bottom: 8px;">
-                <a href="/wiki/{{ page._id }}" style="color: var(--ink); text-decoration: none; display: block; padding: 5px; border-radius: 4px; transition: background 0.2s;">
-                    📜 {{ page.title }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+    {% for group, subcats in library.items() %}
+    <div style="background: var(--parchment); border: 1px solid #8b7d6b; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); break-inside: avoid;">
+        
+        <!-- MAIN GROUP HEADER -->
+        <h2 style="color: var(--accent); border-bottom: 2px solid var(--ink); margin-top: 0; font-variant: small-caps;">
+            {{ group }}
+        </h2>
+
+        <!-- LOOP THROUGH SUBCATEGORIES -->
+        {% for subname, pages in subcats.items() %}
+        <div style="margin-bottom: 1.2rem;">
+            
+            <!-- SUBHEADER -->
+            <h4 style="margin-bottom: 8px; color: #555; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; border-bottom: 1px dashed rgba(0,0,0,0.1);">
+                {{ subname }}
+            </h4>
+            
+            <!-- PAGES LIST -->
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for page in pages %}
+                <li style="margin-bottom: 4px; padding-left: 8px; border-left: 3px solid rgba(0,0,0,0.1);">
+                    <a href="/wiki/{{ page._id }}" style="color: var(--ink); text-decoration: none; display: block; transition: color 0.2s;">
+                        📜 {{ page.title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+
     </div>
     {% else %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; opacity: 0.6;">
+    <div style="column-span: all; text-align: center; padding: 3rem; opacity: 0.6;">
         <p>The archives are currently empty.</p>
     </div>
     {% endfor %}
