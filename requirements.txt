@@ -4,7 +4,8 @@ motor
 jinja2
 python-multipart
 python-jose[cryptography]
-passlib[bcrypt]
+passlib[argon2]
+argon2-cffi
 pydantic
 pydantic-settings
 email-validator
