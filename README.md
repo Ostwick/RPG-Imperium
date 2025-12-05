@@ -63,3 +63,17 @@ Troubleshooting
 
 Acknowledgements
 - Project structure and aesthetics reflect a parchment / archives theme intended for tabletop campaigns.
+
+Internationalization (i18n)
+- The app uses a simple JSON-based translation loader (app/core/i18n.py) and a Jinja filter named trans.
+- Translation files live in app/locales/ (e.g. app/locales/pt_BR.json).
+- To add or change translations:
+  1. Open the target JSON file and add keys/values like: "Dashboard": "Painel"
+  2. Restart the FastAPI process (translations are loaded at startup via load_translations).
+  3. Use the filter in templates: {{ 'Dashboard' | trans }} or in templates inside HTML.
+- The translations are loaded by app.core.i18n.load_translations(settings.LANGUAGE). Ensure settings.LANGUAGE matches the locale filename.
+
+Adding new translatable strings
+- Update your template to wrap visible labels: <a href="/dashboard">{{ 'Dashboard' | trans }}</a>
+- Add the key to the appropriate JSON file in app/locales/.
+- Restart the app and verify the UI.

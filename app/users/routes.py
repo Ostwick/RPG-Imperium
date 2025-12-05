@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
+from app.templates import templates
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import users_collection
@@ -8,7 +8,6 @@ from app.auth.security import verify_password, create_access_token, get_password
 from app.users.models import UserCreate, UserInDB
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 # 1. Show Login Page (GET)
 @router.get("/login", response_class=HTMLResponse)

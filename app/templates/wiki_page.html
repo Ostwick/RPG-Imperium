@@ -16,9 +16,9 @@
         <div style="text-align: right;">
             {% if user and user.role == 'GM' %}
             <div style="display: flex; gap: 10px;">
-                <a href="/wiki/{{ page._id }}/edit" class="btn btn-small">Edit</a>
-                <form action="/wiki/{{ page._id }}/delete" method="POST" onsubmit="return confirm('Burn this page?');">
-                    <button class="btn btn-small" style="background: #8a3324;">Delete</button>
+                <a href="/wiki/{{ page._id }}/edit" class="btn btn-small">{{ 'Edit' | trans }}</a>
+                <form action="/wiki/{{ page._id }}/delete" method="POST" onsubmit="return confirm('{{ 'Burn this page?' | trans }}');">
+                    <button class="btn btn-small" style="background: #8a3324;">{{ 'Delete' | trans }}</button>
                 </form>
             </div>
             {% endif %}
@@ -30,7 +30,7 @@
 
     <!-- Footer -->
     <div style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
-        <a href="/wiki" class="btn btn-small" style="background: transparent; color: var(--ink); border: 1px solid var(--ink);">← Back to Archives</a>
+        <a href="/wiki" class="btn btn-small" style="background: transparent; color: var(--ink); border: 1px solid var(--ink);">← {{ 'Back to Archives' | trans }}</a>
     </div>
 
 </div>

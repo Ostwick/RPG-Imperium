@@ -26,7 +26,9 @@ function updateSimulator() {
     
     const attrLabel = document.getElementById('sim-related-attr');
     if (attrLabel) {
-        attrLabel.innerText = relatedAttr || "Attribute";
+        // Only overwrite the label if the option provides a translated attribute string.
+        // The small element's initial content is rendered server-side and already localized.
+        if (relatedAttr) attrLabel.innerText = relatedAttr;
     }
 
     // 2. Calculate Base Difficulty

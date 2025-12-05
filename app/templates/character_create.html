@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Create Character{% endblock %}
+{% block title %}{{ 'Create Character' | trans }}{% endblock %}
 
 {% block content %}
 
 <div style="max-width: 600px; margin: 0 auto;">
     <div style="text-align: center; margin-bottom: 2rem;">
-        <h2>New Character Registration</h2>
+        <h2>{{ 'New Character Registration' | trans }}</h2>
         <p style="font-style: italic; opacity: 0.8;">
-            "By order of the Crown, all citizens must be accounted for."
+            "{{ 'By order of the Crown, all citizens must be accounted for.' | trans }}"
         </p>
     </div>
 
@@ -16,55 +16,54 @@
         
         <!-- Character Name -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="name"><strong>Character Name</strong></label>
-            <input type="text" id="name" name="name" placeholder="e.g. Roland of Highgarden" required autofocus>
-            <small style="color: #666;">Choose a name fitting for the era.</small>
+            <label for="name"><strong>{{ 'Character Name' | trans }}</strong></label>
+            <input type="text" id="name" name="name" placeholder="{{ 'e.g. Roland of Highgarden' | trans }}" required autofocus>
+            <small style="color: #666;">{{ 'Choose a name fitting for the era.' | trans }}</small>
         </div>
 
         <!-- Archetype / Class -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="archetype"><strong>Social Class / Archetype</strong></label>
+            <label for="archetype"><strong>{{ 'Social Class / Archetype' | trans }}</strong></label>
             <!-- Using a datalist to suggest options but allow custom ones -->
-            <input list="archetypes" id="archetype" name="archetype" placeholder="e.g. Merchant" required>
+            <input list="archetypes" id="archetype" name="archetype" placeholder="{{ 'e.g. Merchant' | trans }}" required>
             <datalist id="archetypes">
-                <option value="Noble">
-                <option value="Merchant">
-                <option value="Clergy">
-                <option value="Mercenary">
-                <option value="Peasant">
-                <option value="Scholar">
-                <option value="Thief">
+                <option value="{{ 'Noble' | trans }}">
+                <option value="{{ 'Merchant' | trans }}">
+                <option value="{{ 'Clergy' | trans }}">
+                <option value="{{ 'Mercenary' | trans }}">
+                <option value="{{ 'Peasant' | trans }}">
+                <option value="{{ 'Thief' | trans }}">
             </datalist>
         </div>
 
         <!-- Culture Selection -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="culture"><strong>Culture</strong></label>
+            <label for="culture"><strong>{{ 'Culture' | trans }}</strong></label>
             <select name="culture" id="culture" required style="width: 100%; padding: 8px; border: 1px solid #8b7d6b; background: rgba(255, 255, 255, 0.4);">
-                <option value="" disabled selected>Select Origin...</option>
-                <option value="Imperial">Imperial (Centralized, Bureaucratic)</option>
-                <option value="Nordic">Nordic (Sea-faring, Hardened)</option>
-                <option value="Celtic">Celtic (Tribal, Nature-bound)</option>
-                <option value="Norman">Norman (Feudal, Cavalry)</option>
-                <option value="Arabic">Arabic (Desert, Trade)</option>
-                <option value="Mongol">Mongol (Steppe, Horse Archers)</option>
+                <option value="" disabled selected>{{ 'Select Origin...' | trans }}</option>
+                <option value="Imperial">{{ 'Imperial (Centralized, Bureaucratic)' | trans }}</option>
+                <option value="Nordic">{{ 'Nordic (Sea-faring, Hardened)' | trans }}</option>
+                <option value="Celtic">{{ 'Celtic (Tribal, Nature-bound)' | trans }}</option>
+                <option value="Norman">{{ 'Norman (Feudal, Cavalry)' | trans }}</option>
+                <option value="Arabic">{{ 'Arabic (Desert, Trade)' | trans }}</option>
+                <option value="Mongol">{{ 'Mongol (Steppe, Horse Archers)' | trans }}</option>
             </select>
         </div>
 
         <!-- Public Bio -->
         <div style="margin-bottom: 1.5rem;">
-            <label for="bio"><strong>Public Biography</strong></label>
-            <textarea id="bio" name="bio" rows="5" placeholder="Describe your appearance and public reputation..." required></textarea>
-            <small style="color: #666;">This information is visible to other players.</small>
+            <label for="bio"><strong>{{ 'Public Biography' | trans }}</strong></label>
+            <textarea id="bio" name="bio" rows="5" placeholder="{{ 'Describe your appearance and public reputation...' | trans }}" required></textarea>
+            <small style="color: #666;">{{ 'This information is visible to other players.' | trans }}</small>
         </div>
 
         <!-- Actions -->
         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
             <button type="submit" class="btn" style="flex: 1; font-weight: bold;">
-                Inscribe into Records
+                {{ 'Inscribe into Records' | trans }}
             </button>
             <a href="/dashboard" class="btn" style="background-color: transparent; color: var(--ink); border: 1px solid var(--ink); text-align: center;">
-                Cancel
+                {{ 'Cancel' | trans }}
             </a>
         </div>
 

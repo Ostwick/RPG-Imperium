@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ skill_name }} Tree{% endblock %}
+{% block title %}{{ skill_name | trans }} {{ 'Tree' | trans }}{% endblock %}
 
 {% block content %}
 
 <div style="text-align: center; margin-bottom: 2rem;">
-    <h1>{{ skill_name }} Mastery</h1>
-    <p>Related Attribute: <strong>{{ attribute }}</strong> (Current: {{ attr_val }})</p>
-    <a href="/characters/{{ character._id }}" class="btn btn-small">← Back to Character</a>
+    <h1>{{ skill_name | trans }} {{ 'Mastery' | trans }}</h1>
+    <p>{{ 'Related Attribute:' | trans }} <strong>{{ attribute }}</strong> ({{ 'Current' | trans }}: {{ attr_val }})</p>
+    <a href="/characters/{{ character._id }}" class="btn btn-small">← {{ 'Back to Character' | trans }}</a>
 </div>
 
 <div style="position: relative; max-width: 800px; margin: 0 auto;">
@@ -22,7 +22,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
                 <strong>Tier {{ node.tier }}</strong>
                 <small style="color: {{ 'green' if attr_val >= node.required_attribute_val else 'red' }}">
-                    Req: {{ attribute }} {{ node.required_attribute_val }}
+                    Req: {{ attribute | trans }} {{ node.required_attribute_val }}
                 </small>
             </div>
 
@@ -43,15 +43,15 @@
                             <form action="/characters/{{ character._id }}/skills/unlock" method="POST">
                                 <input type="hidden" name="attribute" value="{{ attribute }}">
                                 <input type="hidden" name="skill" value="{{ skill_name }}">
-                                <input type="hidden" name="tier" value="{{ node.tier }}">
-                                <input type="hidden" name="choice_index" value="{{ idx }}">
-                                <button type="submit" class="btn btn-small">Learn (-1 SP)</button>
-                            </form>
+                                 <input type="hidden" name="tier" value="{{ node.tier }}">
+                                 <input type="hidden" name="choice_index" value="{{ idx }}">
+                                 <button type="submit" class="btn btn-small">{{ 'Learn (-1 SP)' | trans }}</button>
+                             </form>
                             {% else %}
-                            <button disabled class="btn btn-small" style="background: #999; cursor: not-allowed;">Locked</button>
+                            <button disabled class="btn btn-small" style="background: #999; cursor: not-allowed;">{{ 'Locked' | trans }}</button>
                             {% endif %}
                         {% elif choice_idx == idx %}
-                            <span style="color: var(--gold);">✔ Learned</span>
+                            <span style="color: var(--gold);">✔ {{ 'Learned' | trans }}</span>
                         {% endif %}
                     </div>
                 {% endfor %}

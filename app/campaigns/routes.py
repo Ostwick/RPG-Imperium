@@ -1,7 +1,7 @@
 import random
 from fastapi import APIRouter, Depends, Request, Form, status, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
+from app.templates import templates
 from bson import ObjectId
 
 from app.database import db, users_collection, characters_collection
@@ -10,7 +10,6 @@ from app.campaigns.models import Campaign, CampaignMember, MemberStatus, MapPin,
 from app.game_rules import GAME_ACTIONS, DIFFICULTY_LEVELS, calculate_derived_stats
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 campaigns_collection = db["campaigns"]
 bestiary_collection = db["bestiary"]
 
@@ -364,7 +363,7 @@ async def combat_action(
          # --- DEATH LOGIC UPDATE ---
         if target["hp_current"] <= 0:
             target["hp_current"] = 0
-            target["action_points"] = 0  # <--- FORCE 0 AP ON DEATH
+            target["action_points"] = 0
             msg += f" {target['name']} is DOWN!"
         
         # Sync HP to Sheet (If Target is Player)

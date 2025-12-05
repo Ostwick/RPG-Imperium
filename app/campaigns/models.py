@@ -80,11 +80,11 @@ class Campaign(BaseModel):
 
     # Lists of Sub-Models
     members: List[CampaignMember] = []
-    map_pins: List[MapPin] = []        # <--- Now valid because MapPin is defined above
+    map_pins: List[MapPin] = []
     
     # Combat State
     combat_active: bool = False
-    combatants: List[Combatant] = []   # <--- Now valid because Combatant is defined above
+    combatants: List[Combatant] = []
     combat_log: List[str] = []
 
     class Config:

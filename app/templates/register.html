@@ -92,27 +92,27 @@
 <body>
 
     <div class="container">
-        <h1>New Player Registration</h1>
+        <h1>{{ 'New Player Registration' | trans }}</h1>
 
         {% if error %}
         <div class="error">⚠ {{ error }}</div>
         {% endif %}
 
         <form action="/auth/register" method="POST">
-            <label><strong>Email Address</strong></label>
-            <input type="email" name="email" required placeholder="adventurer@guild.com">
+            <label><strong>{{ 'Email Address' | trans }}</strong></label>
+            <input type="email" name="email" required placeholder="{{ 'adventurer@guild.com' | trans }}">
 
-            <label><strong>Password</strong></label>
-            <input type="password" name="password" required placeholder="Minimum 8 characters">
+            <label><strong>{{ 'Password' | trans }}</strong></label>
+            <input type="password" name="password" required placeholder="{{ 'Minimum 8 characters' | trans }}">
 
-            <label><strong>Confirm Password</strong></label>
-            <input type="password" name="confirm_password" required placeholder="Repeat password">
+            <label><strong>{{ 'Confirm Password' | trans }}</strong></label>
+            <input type="password" name="confirm_password" required placeholder="{{ 'Repeat password' | trans }}">
 
-            <button type="submit">Sign the Ledger</button>
+            <button type="submit">{{ 'Sign the Ledger' | trans }}</button>
         </form>
 
         <div class="links">
-            Already have a seal? <a href="/auth/login">Login here</a>
+            {{ 'Already have a seal?' | trans }} <a href="/auth/login">{{ 'Login here' | trans }}</a>
         </div>
     </div>
 

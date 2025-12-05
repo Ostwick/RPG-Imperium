@@ -134,16 +134,16 @@
 <body>
 
     <nav>
-        <a href="/dashboard" class="brand">Empire RPG</a>
+        <a href="/dashboard" class="brand">{{ 'Empire RPG' | trans }}</a>
         <ul>
             {% if user %}
-                <li>Logged in as: <strong>{{ user.sub }}</strong></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/campaigns">Campaigns</a></li>
-                <li><a href="/wiki">Archives</a></li>
-                <li><a href="/auth/logout">Logout</a></li>
+                <li>{{ 'Logged in as' | trans }}: <strong>{{ user.sub }}</strong></li>
+                <li><a href="/dashboard">{{ 'Dashboard' | trans }}</a></li>
+                <li><a href="/campaigns">{{ 'Campaigns' | trans }}</a></li>
+                <li><a href="/wiki">{{ 'Archives' | trans }}</a></li>
+                <li><a href="/auth/logout">{{ 'Logout' | trans }}</a></li>
             {% else %}
-                <li><a href="/auth/login">Login</a></li>
+                <li><a href="/auth/login">{{ 'Login' | trans }}</a></li>
             {% endif %}
         </ul>
     </nav>

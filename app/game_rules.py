@@ -198,10 +198,6 @@ async def calculate_derived_stats(character: dict):
     }
 
 def calculate_current_load(character: dict):
-    """
-    Sum of Inventory Weight + Equipped Armor/Weapons.
-    Horses do NOT count towards weight (they carry themselves).
-    """
     inv_weight = sum([i["weight"] * i["quantity"] for i in character.get("inventory", [])])
     
     equip_weight = 0

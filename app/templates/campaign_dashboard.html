@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}GM Shield: {{ campaign.name }}{% endblock %}
+{% block title %}{{ ('GM Shield: ' ~ campaign.name) | trans }}{% endblock %}
 
 {% block content %}
 <script src="/static/js/campaign.js"></script>
@@ -8,38 +8,38 @@
 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 2rem;">
     <div>
         <h1 style="margin: 0;">{{ campaign.name }}</h1>
-        <small>GM Dashboard</small>
+        <small>{{ 'GM Dashboard' | trans }}</small>
     </div>
     
         
 <!-- RIGHT SIDE: Economy & Actions -->
     <div style="text-align: right; display: flex; gap: 2rem; align-items: flex-start;">
         <!-- Party Speed -->
-        <div title="Average Party Travel Speed">
-            <div style="font-size: 0.8rem;">Party Speed</div>
+        <div title="{{ 'Average Party Travel Speed' | trans }}">
+            <div style="font-size: 0.8rem;">{{ 'Party Speed' | trans }}</div>
             <span style="font-size: 1.5rem; font-weight: bold;">🐎 {{ party_speed }}%</span>
         </div>
 
-        <div title="Total Gold in Party Treasury">
-            <div style="font-size: 0.8rem;">Party Treasury</div>
+        <div title="{{ 'Total Gold in Party Treasury' | trans }}">
+            <div style="font-size: 0.8rem;">{{ 'Party Treasury' | trans }}</div>
             <span style="font-size: 1.5rem; color: #c5a004; font-weight: bold;">{{ campaign.party_gold }} 💰</span>
         </div>
         
-        <div title="Weekly Maintenance Cost">
-            <div style="font-size: 0.8rem;">Weekly Upkeep</div>
+        <div title="{{ 'Weekly Maintenance Cost' | trans }}">
+            <div style="font-size: 0.8rem;">{{ 'Weekly Upkeep' | trans }}</div>
             <span style="font-size: 1.5rem; color: var(--accent); font-weight: bold;">-{{ campaign.upkeep_cost }} 💰</span>
         </div>
         
         <!-- Actions Column -->
         <div style="display: flex; flex-direction: column; gap: 5px;">
             <button onclick="document.getElementById('settingsModal').style.display='block'" class="btn btn-small" style="width: 100%;">
-                ⚙️ Settings
+                ⚙️ {{ 'Settings' | trans }}
             </button>
             
             {% if campaign.upkeep_cost > 0 %}
-            <form action="/campaigns/{{ campaign._id }}/gold/pay_upkeep" method="POST" onsubmit="return confirm('Pay {{ campaign.upkeep_cost }} gold for weekly upkeep?');">
-                <button class="btn btn-small" style="background: #8a3324; width: 100%; font-size: 0.75rem;" title="Deduct upkeep from treasury">
-                    Pay Upkeep
+            <form action="/campaigns/{{ campaign._id }}/gold/pay_upkeep" method="POST" onsubmit="return confirm('{{ 'Pay ' ~ campaign.upkeep_cost ~ ' gold for weekly upkeep?' | trans }}');">
+                <button class="btn btn-small" style="background: #8a3324; width: 100%; font-size: 0.75rem;" title="{{ 'Deduct upkeep from treasury' | trans }}">
+                    {{ 'Pay Upkeep' | trans }}
                 </button>
             </form>
             {% endif %}
@@ -50,10 +50,10 @@
 <!-- === ROW 1: BATTLE SIMULATOR (Full Width) === -->
 <div style="margin-bottom: 2rem; border: 3px solid #8a3324; padding: 1rem; background: rgba(0,0,0,0.05);">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #8a3324; padding-bottom: 10px; margin-bottom: 10px;">
-        <h2 style="margin: 0; color: #8a3324;">⚔️ Battle Simulator</h2>
+        <h2 style="margin: 0; color: #8a3324;">⚔️ {{ 'Battle Simulator' | trans }}</h2>
         {% if campaign.combat_active %}
-            <form action="/campaigns/{{ campaign._id }}/combat/end" method="POST" onsubmit="return confirm('End Combat?');">
-                <button class="btn btn-small" style="background: #666;">End Combat</button>
+            <form action="/campaigns/{{ campaign._id }}/combat/end" method="POST" onsubmit="return confirm('{{ 'End Combat?' | trans }}');">
+                <button class="btn btn-small" style="background: #666;">{{ 'End Combat' | trans }}</button>
             </form>
         {% endif %}
     </div>
@@ -63,7 +63,7 @@
     <form action="/campaigns/{{ campaign._id }}/combat/start" method="POST">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <div>
-                <h4>1. Select Party Members</h4>
+                <h4>{{ '1. Select Party Members' | trans }}</h4>
                 {% for char in party %}
                 <div>
                     <label>
@@ -74,7 +74,7 @@
                 {% endfor %}
             </div>
             <div>
-                <h4>2. Add Enemies</h4>
+                <h4>{{ '2. Add Enemies' | trans }}</h4>
                 <div id="enemy-container">
                     <select name="enemy_ids" style="margin-bottom: 5px;">
                         {% for mob in bestiary %}
@@ -82,11 +82,11 @@
                         {% endfor %}
                     </select>
                 </div>
-                <button type="button" onclick="duplicateEnemySelect()" class="btn btn-small">+ Add Another</button>
+                <button type="button" onclick="duplicateEnemySelect()" class="btn btn-small">{{ '+ Add Another' | trans }}</button>
             </div>
         </div>
         <div style="text-align: center; margin-top: 1rem;">
-            <button class="btn" style="background: #8a3324; font-size: 1.2rem;">START BATTLE</button>
+            <button class="btn" style="background: #8a3324; font-size: 1.2rem;">{{ 'START BATTLE' | trans }}</button>
         </div>
     </form>
 
@@ -102,11 +102,11 @@
         <div>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr style="background: #ccc;">
-                    <th>Name</th>
-                    <th>HP</th>
-                    <th>Stam</th> <!-- NEW -->
-                    <th>Action Bar</th>
-                    <th>AP</th>
+                    <th>{{ 'Name' | trans }}</th>
+                    <th>{{ 'HP' | trans }}</th>
+                    <th>{{ 'Stam' | trans }}</th>
+                    <th>{{ 'Action Bar' | trans }}</th>
+                    <th>{{ 'AP' | trans }}</th>
                 </tr>
                 {% for c in sorted_combat %}
                 <tr style="background: {{ '#ffe6e6' if c.type == 'Enemy' else '#e6fffa' }}; 
@@ -135,7 +135,7 @@
             {% if not is_ready %}
             <div style="text-align: center; margin-top: 1rem;">
                 <form action="/campaigns/{{ campaign._id }}/combat/next" method="POST">
-                    <button class="btn">Next Tick ⏩</button>
+                    <button class="btn">{{ 'Next Tick' | trans }} ⏩</button>
                 </form>
             </div>
             {% endif %}
@@ -145,12 +145,16 @@
         <div style="background: #fff; padding: 1rem; border: 1px solid #ccc; display: flex; flex-direction: column;">
             <div style="flex-grow: 1; border: 1px solid #eee; background: #f9f9f9; padding: 5px; margin-bottom: 10px; overflow-y: auto; max-height: 150px; font-size: 0.8rem;">
                 {% for log in campaign.combat_log %}
-                <div style="border-bottom: 1px solid #eee;">{{ log }}</div>
+                    {% if log.key is defined %}
+                    <div style="border-bottom: 1px solid #eee;">{{ log.key | transp(log.params) }}</div>
+                    {% else %}
+                    <div style="border-bottom: 1px solid #eee;">{{ log }}</div>
+                    {% endif %}
                 {% endfor %}
             </div>
 
             {% if is_ready %}
-            <h3 style="margin: 0 0 10px 0; color: #8a3324;">{{ active_actor.name }}'s Turn</h3>
+            <h3 style="margin: 0 0 10px 0; color: #8a3324;">{{ ('Turn of {name}' | trans).replace('{name}', active_actor.name) }}</h3>
             
             <form action="/campaigns/{{ campaign._id }}/combat/act" method="POST">
                 <!-- Helper to find array index -->
@@ -159,7 +163,7 @@
                 {% endfor %}
 
                 <select name="target_index" style="width: 100%; margin-bottom: 10px; padding: 5px;" required>
-                    <option value="" disabled selected>Select Target...</option>
+                    <option value="" disabled selected>{{ 'Select Target...' | trans }}</option>
                     {% for c in campaign.combatants %}
                         {% if c.hp_current > 0 %}
                         <option value="{{ loop.index0 }}">{{ c.name }} (HP: {{ c.hp_current }})</option>
@@ -170,30 +174,30 @@
                 <!-- Bonuses -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
                     <div>
-                        <small>Bonus Dmg</small>
+                        <small>{{ 'Bonus Dmg' | trans }}</small>
                         <input type="number" name="bonus_dmg" value="0" style="width: 100%;">
                     </div>
                     <div>
-                        <small>Target Bonus Def</small>
+                        <small>{{ 'Target Bonus Def' | trans }}</small>
                         <input type="number" name="bonus_def" value="0" style="width: 100%;">
                     </div>
                 </div>
                 
                 <div style="margin-bottom: 10px;">
                     <label style="cursor: pointer;">
-                        <input type="checkbox" name="is_crit" value="true"> Critical Hit?
+                        <input type="checkbox" name="is_crit" value="true"> {{ 'Critical Hit?' | trans }}
                     </label>
                 </div>
 
                 <!-- Action Buttons -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <button name="action_type" value="Attack" class="btn" style="background: #8a3324;">⚔️ Hit</button>
-                    <button name="action_type" value="Miss" class="btn" style="background: #e6b800; color: #000;">🚫 Miss</button>
+                    <button name="action_type" value="Attack" class="btn" style="background: #8a3324;">⚔️ {{ 'Hit' | trans }}</button>
+                    <button name="action_type" value="Miss" class="btn" style="background: #e6b800; color: #000;">🚫 {{ 'Miss' | trans }}</button>
                 </div>
-                <button name="action_type" value="Wait" class="btn btn-small" style="width: 100%; margin-top: 5px; background: #666;">Wait (Delay)</button>
+                <button name="action_type" value="Wait" class="btn btn-small" style="width: 100%; margin-top: 5px; background: #666;">{{ 'Wait (Delay)' | trans }}</button>
             </form>
             {% else %}
-            <p style="text-align: center; color: #999;">Waiting for tick...</p>
+            <p style="text-align: center; color: #999;">{{ 'Waiting for tick...' | trans }}</p>
             {% endif %}
         </div>
     </div>
@@ -220,7 +224,7 @@
                         <strong>{{ pin.label }}</strong>
                         <form action="/campaigns/{{ campaign._id }}/map/pin/delete" method="POST">
                             <input type="hidden" name="pin_id" value="{{ pin.id }}">
-                            <button class="btn-text" style="color: #ffcccc; font-size: 0.7rem;">[X]</button>
+                            <button class="btn-text" style="color: #ff0000; font-size: 0.7rem;">[X]</button>
                         </form>
                     </div>
                 </div>
@@ -231,36 +235,36 @@
     <!-- TEST SIMULATOR -->
     <div>
         <div style="background: var(--parchment); border: 2px solid var(--accent); padding: 1.5rem; height: 100%; box-sizing: border-box;">
-            <h3 style="margin-top: 0; text-align: center; border-bottom: 1px solid var(--accent); padding-bottom: 10px;">⚖️ Test Simulator</h3>
+            <h3 style="margin-top: 0; text-align: center; border-bottom: 1px solid var(--accent); padding-bottom: 10px;">⚖️ {{ 'Test Simulator' | trans }}</h3>
             
             <div style="margin-bottom: 1rem;">
-                <label><strong>Action</strong></label>
+                <label><strong>{{ 'Action' | trans }}</strong></label>
                 <select id="sim-action" onchange="updateSimulator()" style="width: 100%;">
                     {% for action in actions %}
                     <option value="{{ action.name }}" data-attr="{{ action.attribute }}">{{ action.name }}</option>
                     {% endfor %}
                 </select>
-                <small id="sim-related-attr" style="display: block; text-align: right; color: #666;">Vigor</small>
+                <small id="sim-related-attr" style="display: block; text-align: right; color: #666;">{{ 'Vigor' | trans }}</small>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label><strong>Difficulty</strong></label>
+                <label><strong>{{ 'Difficulty' | trans }}</strong></label>
                 <select id="sim-difficulty" onchange="updateSimulator()" style="width: 100%;">
-                    <option value="1">Lvl 1 (Trivial)</option>
-                    <option value="2">Lvl 2 (Easy)</option>
-                    <option value="3" selected>Lvl 3 (Medium)</option>
-                    <option value="4">Lvl 4 (Hard)</option>
-                    <option value="5">Lvl 5 (Legendary)</option>
+                    <option value="1">Lvl 1 ({{ 'Trivial' | trans }})</option>
+                    <option value="2">Lvl 2 ({{ 'Easy' | trans }})</option>
+                    <option value="3" selected>Lvl 3 ({{ 'Medium' | trans }})</option>
+                    <option value="4">Lvl 4 ({{ 'Hard' | trans }})</option>
+                    <option value="5">Lvl 5 ({{ 'Legendary' | trans }})</option>
                 </select>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label><strong>Attribute</strong></label>
+                <label><strong>{{ 'Attribute' | trans }}</strong></label>
                 <input type="number" id="sim-attribute-val" value="10" oninput="updateSimulator()" style="width: 100%;">
             </div>
 
             <div style="text-align: center; background: var(--ink); color: var(--parchment); padding: 1rem; border-radius: 4px;">
-                <div>Target (d20)</div>
+                <div>{{ 'Target (d20)' | trans }}</div>
                 <div id="sim-result" style="font-size: 2.5rem; font-weight: bold; color: #c5a004;">5+</div>
             </div>
         </div>
@@ -272,15 +276,15 @@
     
     <!-- PARTY LIST -->
     <div>
-        <h3>Active Party</h3>
+        <h3>{{ 'Active Party' | trans }}</h3>
         <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4);">
             <tr style="background: var(--ink); color: var(--parchment);">
-                <th style="padding: 10px; text-align: left;">Character</th>
-                <th>HP</th>
-                <th>Stamina</th> <!-- NEW -->
-                <th>Speed</th>
-                <th>Gold</th>
-                <th>Transfer</th>
+                <th style="padding: 10px; text-align: left;">{{ 'Character' | trans }}</th>
+                <th>{{ 'HP' | trans }}</th>
+                <th>{{ 'Stamina' | trans }}</th>
+                <th>{{ 'Speed' | trans }}</th>
+                <th>{{ 'Gold' | trans }}</th>
+                <th>{{ 'Transfer' | trans }}</th>
             </tr>
             {% for char in party %}
             <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
@@ -319,7 +323,7 @@
         {% if pending %}
         <div style="margin-top: 2rem; border: 2px dashed var(--accent); padding: 1rem; background: rgba(138, 51, 36, 0.05); border-radius: 4px;">
             <h4 style="margin-top: 0; color: var(--accent); border-bottom: 1px solid var(--accent); padding-bottom: 5px;">
-                ⚠️ Pending Join Requests
+                ⚠️ {{ 'Pending Join Requests' | trans }}
             </h4>
             
             <ul style="list-style: none; padding: 0; margin: 0;">
@@ -327,18 +331,18 @@
                 <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1);">
                     <div>
                         <strong style="font-size: 1.1rem;">{{ req.character_name }}</strong>
-                        <div style="font-size: 0.8rem; opacity: 0.7;">wants to join the adventure.</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7;">{{ 'wants to join the adventure.' | trans }}</div>
                     </div>
                     
                     <form action="/campaigns/{{ campaign._id }}/members/status" method="POST" style="display: flex; gap: 5px;">
                         <input type="hidden" name="char_id" value="{{ req.character_id }}">
                         
                         <button name="new_status" value="Accepted" class="btn btn-small" style="background: var(--ink); color: var(--parchment);">
-                            Accept
+                            {{ 'Accept' | trans }}
                         </button>
                         
                         <button name="new_status" value="Rejected" class="btn btn-small" style="background: transparent; color: #8a3324; border: 1px solid #8a3324;">
-                            Deny
+                            {{ 'Deny' | trans }}
                         </button>
                     </form>
                 </li>
@@ -350,25 +354,25 @@
 
     <!-- SCRATCHPAD -->
     <div>
-        <h3>Session Notes</h3>
-        <textarea style="width: 100%; height: 250px; resize: vertical; padding: 10px; border: 1px solid #8b7d6b; background: rgba(255,255,255,0.5);" placeholder="Quick notes..."></textarea>
+        <h3>{{ 'Session Notes' | trans }}</h3>
+        <textarea style="width: 100%; height: 250px; resize: vertical; padding: 10px; border: 1px solid #8b7d6b; background: rgba(255,255,255,0.5);" placeholder="{{ 'Quick notes...' | trans }}"></textarea>
     </div>
 </div>
 
 <!-- MODAL: Settings -->
 <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
     <div style="background: var(--parchment); width: 400px; margin: 15vh auto; padding: 2rem; border: 2px solid var(--ink);">
-        <h3>Campaign Settings</h3>
+        <h3>{{ 'Campaign Settings' | trans }}</h3>
         <form action="/campaigns/{{ campaign._id }}/settings" method="POST">
-            <label>Map Image URL</label>
+            <label>{{ 'Map Image URL' | trans }}</label>
             <input type="text" name="map_url" value="{{ campaign.map_url }}" required>
             
-            <label>Weekly Upkeep Cost</label>
+            <label>{{ 'Weekly Upkeep Cost' | trans }}</label>
             <input type="number" name="upkeep" value="{{ campaign.upkeep_cost }}">
             
             <div style="margin-top: 1rem; display: flex; gap: 10px;">
-                <button class="btn" style="flex: 1;">Save</button>
-                <button type="button" onclick="document.getElementById('settingsModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+                <button class="btn" style="flex: 1;">{{ 'Save' | trans }}</button>
+                <button type="button" onclick="document.getElementById('settingsModal').style.display='none'" class="btn" style="background: #666;">{{ 'Cancel' | trans }}</button>
             </div>
         </form>
     </div>
@@ -377,7 +381,7 @@
 <!-- MODAL: Gold Transfer -->
 <div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
     <div style="background: var(--parchment); width: 350px; margin: 20vh auto; padding: 2rem; border: 2px solid var(--ink);">
-        <h3 id="transferTitle">Transfer Gold</h3>
+        <h3 id="transferTitle">{{ 'Transfer' | trans }}</h3>
         <p id="transferDesc"></p>
         
         <form action="/campaigns/{{ campaign._id }}/gold/transfer" method="POST">
@@ -387,12 +391,12 @@
                  Simpler: One input for amount, and a hidden field for direction multiplier. -->
             <input type="hidden" name="direction" id="transferDirection" value="1"> 
             
-            <label>Amount</label>
+            <label>{{ 'Amount' | trans }}</label>
             <input type="number" name="raw_amount" id="transferAmount" required min="1">
             
             <div style="margin-top: 1rem; display: flex; gap: 10px;">
-                <button type="button" onclick="submitTransfer()" class="btn" style="flex: 1;">Confirm</button>
-                <button type="button" onclick="document.getElementById('transferModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+                <button type="button" onclick="submitTransfer()" class="btn" style="flex: 1;">{{ 'Confirm' | trans }}</button>
+                <button type="button" onclick="document.getElementById('transferModal').style.display='none'" class="btn" style="background: #666;">{{ 'Cancel' | trans }}</button>
             </div>
         </form>
     </div>
@@ -402,25 +406,25 @@
 <!-- MODAL: Add Map Pin -->
 <div id="pinModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">
     <div style="background: var(--parchment); width: 300px; margin: 20vh auto; padding: 1.5rem; border: 2px solid var(--ink); position: relative;">
-        <h3>Add Map Pin</h3>
+        <h3>{{ 'Add Map Pin' | trans }}</h3>
         <form action="/campaigns/{{ campaign._id }}/map/pin" method="POST">
             <!-- Hidden inputs for coordinates -->
             <input type="hidden" name="x" id="pinX">
             <input type="hidden" name="y" id="pinY">
             
-            <label>Label</label>
+            <label>{{ 'Label' | trans }}</label>
             <input type="text" name="label" placeholder="Party Location" required autofocus>
             
-            <label>Type</label>
+            <label>{{ 'Type' | trans }}</label>
             <select name="type" style="margin-bottom: 1rem;">
-                <option value="Party">Party (Blue)</option>
-                <option value="Enemy">Enemy (Red)</option>
-                <option value="Location">Location (Yellow)</option>
+                <option value="Party">{{ 'Party (Blue)' | trans }}</option>
+                <option value="Enemy">{{ 'Enemy (Red)' | trans }}</option>
+                <option value="Location">{{ 'Location (Yellow)' | trans }}</option>
             </select>
             
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex: 1;">Place Pin</button>
-                <button type="button" onclick="document.getElementById('pinModal').style.display='none'" class="btn" style="background: #666;">Cancel</button>
+                <button class="btn" style="flex: 1;">{{ 'Place Pin' | trans }}</button>
+                <button type="button" onclick="document.getElementById('pinModal').style.display='none'" class="btn" style="background: #666;">{{ 'Cancel' | trans }}</button>
             </div>
         </form>
     </div>
@@ -498,12 +502,12 @@
         const dirInput = document.getElementById('transferDirection');
         
         if (direction === 'in') {
-            title.innerText = "Collect Taxes / Fees";
-            desc.innerText = `Take gold FROM ${charName} to Party Treasury.`;
+            title.innerText = "{{ 'Collect Taxes / Fees' | trans }}";
+            desc.innerText = `{{ 'Take gold FROM' | trans }} ${charName} {{ 'to Party Treasury.' | trans }}`;
             dirInput.value = "1"; // Positive
         } else {
-            title.innerText = "Distribute Loot";
-            desc.innerText = `Give gold TO ${charName} from Treasury.`;
+            title.innerText = "{{ 'Distribute Loot' | trans }}";
+            desc.innerText = `{{ 'Give gold TO' | trans }} ${charName} {{ 'from Treasury.' | trans }}`;
             dirInput.value = "-1"; // Negative
         }
     }
@@ -515,14 +519,10 @@
         const dir = document.getElementById('transferDirection').value;
         
         // Create a hidden input for the final signed amount that the backend expects
-        const finalAmount = parseInt(raw) * parseInt(dir);
-        
-        // Remove raw_amount from submission or rename? 
-        // Actually, easiest way is to create a hidden input named 'amount' 
         const hiddenAmt = document.createElement('input');
         hiddenAmt.type = 'hidden';
         hiddenAmt.name = 'amount';
-        hiddenAmt.value = finalAmount;
+        hiddenAmt.value = parseInt(raw) * parseInt(dir);
         form.appendChild(hiddenAmt);
         
         // Remove raw_amount so it doesn't confuse backend (optional if backend ignores extra fields)

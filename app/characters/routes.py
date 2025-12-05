@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Form, status, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
+from app.templates import templates
 from bson import ObjectId
 
 from app.database import characters_collection, users_collection
@@ -13,7 +13,6 @@ from app.characters.models import (
 from app.game_rules import SKILL_CATEGORIES, get_skill_tree, calculate_derived_stats
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 # --- HELPER: Get Character & Check Owner ---
 async def get_character_helper(char_id: str, user: dict):
@@ -96,32 +95,48 @@ async def create_character(
 async def view_sheet(char_id: str, request: Request, user: dict = Depends(get_current_user)):
     if not user: return RedirectResponse("/auth/login", status.HTTP_303_SEE_OTHER)
     
-    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    if not ObjectId.is_valid(char_id):
+        raise HTTPException(404, "Invalid ID")
+
+    # 1. Fetch Character
+    char = await characters_collection.find_one({"_id": ObjectId(char_id)})
+    if not char:
+        raise HTTPException(404, "Character not found")
+
+    # 2. Permissions
+    is_owner = str(char["user_id"]) == user["id"]
+    is_gm = user["role"] == "GM"
     
+    # 3. Privacy
+    if not (is_owner or is_gm):
+        char["private_notes"] = "" 
+
+    # 4. Calculate Stats (Async)
     derived = await calculate_derived_stats(char)
     
+    # 5. Auto-Update Max Stats in DB if changed
     final_max_hp = 100 + derived["bonus_hp"]
     final_max_stamina = 100 + derived["bonus_stamina"]
-
-    updates = {}
-    if char["status"]["hp_max"] != final_max_hp:
-        updates["status.hp_max"] = final_max_hp
     
-    if updates:
-        await characters_collection.update_one({"_id": char["_id"]}, {"$set": updates})
+    if char["status"]["hp_max"] != final_max_hp:
+        if is_owner or is_gm:
+            await characters_collection.update_one({"_id": char["_id"]}, {"$set": {"status.hp_max": final_max_hp}})
         char["status"]["hp_max"] = final_max_hp
 
     return templates.TemplateResponse("character_sheet.html", {
-        "request": request, "user": user, "character": char, 
-        "is_owner": is_owner, "is_gm": is_gm,
+        "request": request, 
+        "user": user, 
+        "character": char, 
+        "is_owner": is_owner, 
+        "is_gm": is_gm,
         "current_load": derived["current_load"],
         "max_load": derived["max_load"],
         "attack": derived["attack"],
         "defense": derived["defense"],
         "crit_bonus": derived["crit_bonus"],
         "max_stamina": final_max_stamina,
-        "speed": derived["current_speed"],
-        "max_speed": derived["max_speed"],
+        "speed": derived["current_speed"],  # The calculated speed (e.g. 80)
+        "max_speed": derived["max_speed"]   # The potential speed (e.g. 100) <--- THIS WAS MISSING
     })
 
 
@@ -133,7 +148,19 @@ async def view_skill_tree(
 ):
     if not user: return RedirectResponse("/auth/login", status.HTTP_303_SEE_OTHER)
     
-    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    # 1. Fetch Character Manually (To avoid the Helper's auto-403 error)
+    if not ObjectId.is_valid(char_id): raise HTTPException(404, "Invalid ID")
+    char = await characters_collection.find_one({"_id": ObjectId(char_id)})
+    if not char: raise HTTPException(404, "Character not found")
+
+    is_owner = str(char["user_id"]) == user["id"]
+    is_gm = user["role"] == "GM"
+
+    # 2. Soft Redirect if Permission Denied
+    if not (is_owner or is_gm):
+        return RedirectResponse(f"/characters/{char_id}?error=Only the owner can manage skills.", status.HTTP_303_SEE_OTHER)
+    
+    # 3. Load Tree Data
     attr_val = char["stats"][attribute]["value"]
     unlocked = char["stats"][attribute]["skills"][skill_name]["nodes_unlocked"]
     tree_data = await get_skill_tree(skill_name)

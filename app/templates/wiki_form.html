@@ -1,55 +1,55 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Edit' if page else 'New' }} Entry{% endblock %}
+{% block title %}{{ (('Edit Entry' if page else 'New Entry') | trans) }}{% endblock %}
 
 {% block content %}
 <div style="max-width: 700px; margin: 0 auto;">
-    <h1>{{ 'Edit' if page else 'New' }} Archive Entry</h1>
+    <h1>{{ (('Edit Entry' if page else 'New Entry') | trans) }}</h1>
     
     <form action="{{ '/wiki/' + page._id|string + '/edit' if page else '/wiki/new' }}" method="POST">
         
         <div style="margin-bottom: 1rem;">
-            <label>Title</label>
-            <input type="text" name="title" value="{{ page.title if page else '' }}" required placeholder="e.g. The Imperial Calendar">
+            <label>{{ 'Title' | trans }}</label>
+            <input type="text" name="title" value="{{ page.title if page else '' }}" required placeholder="{{ 'e.g. The Imperial Calendar' | trans }}">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 1rem;">
             <!-- GROUP SELECTION -->
             <div>
-                <label>Group</label>
+                <label>{{ 'Group' | trans }}</label>
                 <select name="group" required>
-                    <option value="" disabled {{ 'selected' if not page else '' }}>Select Group...</option>
+                    <option value="" disabled {{ 'selected' if not page else '' }}>{{ 'Select Group...' | trans }}</option>
                     
                     {% set current = page.group if page else '' %}
-                    <option value="Codex of Rules" {{ 'selected' if current == 'Codex of Rules' else '' }}>Codex of Rules</option>
-                    <option value="Imperial Atlas" {{ 'selected' if current == 'Imperial Atlas' else '' }}>Imperial Atlas</option>
-                    <option value="Societas" {{ 'selected' if current == 'Societas' else '' }}>Societas</option>
-                    <option value="Annals of History" {{ 'selected' if current == 'Annals of History' else '' }}>Annals of History</option>
-                    <option value="Dramatis Personae" {{ 'selected' if current == 'Dramatis Personae' else '' }}>Dramatis Personae</option>
+                    <option value="Codex of Rules" {{ 'selected' if current == 'Codex of Rules' else '' }}>{{ 'Codex of Rules' | trans }}</option>
+                    <option value="Imperial Atlas" {{ 'selected' if current == 'Imperial Atlas' else '' }}>{{ 'Imperial Atlas' | trans }}</option>
+                    <option value="Societas" {{ 'selected' if current == 'Societas' else '' }}>{{ 'Societas' | trans }}</option>
+                    <option value="Annals of History" {{ 'selected' if current == 'Annals of History' else '' }}>{{ 'Annals of History' | trans }}</option>
+                    <option value="Dramatis Personae" {{ 'selected' if current == 'Dramatis Personae' else '' }}>{{ 'Dramatis Personae' | trans }}</option>
                 </select>
             </div>
 
             <!-- SUBCATEGORY INPUT -->
             <div>
-                <label>Subcategory</label>
-                <input list="subcats" name="subcategory" value="{{ page.subcategory if page else '' }}" required placeholder="e.g. Combat">
+                <label>{{ 'Subcategory' | trans }}</label>
+                <input list="subcats" name="subcategory" value="{{ page.subcategory if page else '' }}" required placeholder="{{ 'e.g. Combat' | trans }}">
                 <datalist id="subcats">
-                    <option value="Combat">
-                    <option value="Economy">
-                    <option value="The Church">
-                    <option value="Factions">
-                    <option value="Geography">
+                    <option value="{{'Combat' | trans}}">
+                    <option value="{{'Economy' | trans}}">
+                    <option value="{{'The Church' | trans}}">
+                    <option value="{{'Factions' | trans}}">
+                    <option value="{{'Geography' | trans}}">
                 </datalist>
             </div>
         </div>
 
         <div style="margin-bottom: 2rem;">
-            <label>Content</label>
+            <label>{{ 'Content' | trans }}</label>
             <textarea name="content" rows="20" required style="width: 100%; font-family: 'Courier New', monospace; padding: 1rem;">{{ page.content if page else '' }}</textarea>
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <button class="btn" style="flex: 1;">{{ 'Update Page' if page else 'Publish Page' }}</button>
-            <a href="{{ '/wiki/' + page._id|string if page else '/wiki' }}" class="btn" style="background: #666; text-align: center;">Cancel</a>
+            <button class="btn" style="flex: 1;">{{ (('Update Page' if page else 'Publish Page') | trans) }}</button>
+            <a href="{{ '/wiki/' + page._id|string if page else '/wiki' }}" class="btn" style="background: #666; text-align: center;">{{ 'Cancel' | trans }}</a>
         </div>
 
     </form>

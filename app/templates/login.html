@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empire RPG - Login</title>
+    <title>{{ 'Empire RPG' | trans }} - {{ 'Login' | trans }}</title>
     <style>
         :root {
             --parchment: #f4e4bc;
@@ -121,7 +121,7 @@
 <body>
 
     <div class="login-container">
-        <h1>Empire Archives</h1>
+        <h1>{{ 'Empire RPG' | trans }}</h1>
         
         <!-- Error Message Block (Jinja2) -->
         {% if error %}
@@ -132,22 +132,22 @@
 
         <form action="/auth/login" method="POST">
             <div class="form-group">
-                <label for="username">Email Address</label>
+                <label for="username">{{ 'Email Address' | trans }}</label>
                 <!-- NOTE: name="username" is required by FastAPI OAuth2PasswordRequestForm -->
-                <input type="email" id="username" name="username" placeholder="noble@court.com" required>
+                <input type="email" id="username" name="username" placeholder="{{ 'noble@court.com' | trans }}" required>
             </div>
 
             <div class="form-group">
-                <label for="password">Passphrase</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                <label for="password">{{ 'Passphrase' | trans }}</label>
+                <input type="password" id="password" name="password" placeholder="{{ '••••••••' | trans }}" required>
             </div>
 
-            <button type="submit">Enter the Archives</button>
+            <button type="submit">{{ 'Enter the Archives' | trans }}</button>
         </form>
 
         <div class="footer">
-            <p>New to the realm? <a href="/auth/register">Inscribe your name here</a>.</p>
-            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px;">Access restricted to authorized Guild members.</p>
+            <p>{{ 'New to the realm?' | trans }} <a href="/auth/register">{{ 'Inscribe your name here' | trans }}</a>.</p>
+            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px;">{{ 'Access restricted to authorized Guild members.' | trans }}</p>
         </div>
     </div>
 

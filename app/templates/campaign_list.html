@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Campaigns{% endblock %}
+{% block title %}{{ 'Campaigns' | trans }}{% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); margin-bottom: 2rem;">
-    <h1>Campaigns</h1>
+    <h1>{{ 'Campaigns' | trans }}</h1>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
@@ -13,37 +13,33 @@
         
         <!-- SECTION A: GM Campaigns (Only for GM) -->
         {% if user.role == 'GM' %}
-            <h3>My Campaigns (GM)</h3>
+            <h3>{{ 'My Campaigns (GM)' | trans }}</h3>
             {% for camp in my_campaigns %}
             <div style="background: rgba(255,255,255,0.4); padding: 1rem; margin-bottom: 1rem; border: 1px solid #8b7d6b;">
                 <div style="display: flex; justify-content: space-between;">
                     <strong>{{ camp.name }}</strong>
-                    <a href="/campaigns/{{ camp._id }}/dashboard" class="btn btn-small">GM Dashboard</a>
+                    <a href="/campaigns/{{ camp._id }}/dashboard" class="btn btn-small">{{ 'GM Dashboard' | trans }}</a>
                 </div>
                 <div style="font-size: 0.8rem; margin-top: 5px;">
-                    Players: {{ camp.members | length }} | Gold: {{ camp.party_gold }}
+                    {{ 'Players' | trans }}: {{ camp.members | length }} | {{ 'Gold' | trans }}: {{ camp.party_gold }}
                 </div>
             </div>
             {% else %}
-            {% if my_campaigns %}
-                <!-- Case where list is empty but loop ran -->
-            {% else %}
-                <p style="opacity: 0.6; font-style: italic;">You haven't created any campaigns.</p>
-            {% endif %}
+                <p style="opacity: 0.6; font-style: italic;">{{ "You haven't created any campaigns." | trans }}</p>
             {% endfor %}
 
             <!-- Create New (Only Visible to GM) -->
             <div style="margin-top: 2rem; padding: 1.5rem; border: 2px dashed var(--accent); background: rgba(0,0,0,0.02);">
-                <h4 style="margin-top:0;">Create New Campaign</h4>
+                <h4 style="margin-top:0;">{{ 'Create New Campaign' | trans }}</h4>
                 <form action="/campaigns/new" method="POST">
-                    <input type="text" name="name" placeholder="Campaign Name" required style="margin-bottom: 10px;">
-                    <button class="btn" style="width: 100%;">Create World</button>
+                    <input type="text" name="name" placeholder="{{ 'Campaign Name' | trans }}" required style="margin-bottom: 10px;">
+                    <button class="btn" style="width: 100%;">{{ 'Create World' | trans }}</button>
                 </form>
             </div>
-        {% endif %}
+         {% endif %}
 
         <!-- SECTION B: Player Adventures (Participating) -->
-        <h3>My Adventures (Player)</h3>
+        <h3>{{ 'My Adventures (Player)' | trans }}</h3>
         {% for camp in participating_campaigns %}
         <div style="background: var(--parchment); padding: 1rem; margin-bottom: 1rem; border: 1px solid #8b7d6b; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -60,28 +56,49 @@
                 <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; 
                              background: {{ '#e6fffa' if ns.status == 'Accepted' else '#fff5f5' }}; 
                              color: {{ 'green' if ns.status == 'Accepted' else 'red' }}; border: 1px solid currentColor;">
-                    {{ ns.status }}
-                </span>
+                    {{ ns.status | trans }}
+                 </span>
             </div>
             
             {% if ns.status == 'Accepted' %}
             <div style="margin-top: 10px; font-size: 0.9rem;">
-                <span style="color: #c5a004; font-weight: bold;">Party Gold: {{ camp.party_gold }}</span>
+                <span style="color: #c5a004; font-weight: bold;">{{ 'Party Gold' | trans }}: {{ camp.party_gold }}</span>
             </div>
+
+            <!-- List Companions -->
+            <div style="margin-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 5px;">
+                <small style="font-weight: bold; color: var(--accent);">{{ 'Companions' | trans }}:</small>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                    {% for member in camp.members %}
+                        {% if member.status == 'Accepted' %}
+                            <a href="/characters/{{ member.character_id }}" 
+                               target="_blank" 
+                               title="{{ 'View Sheet' | trans }}"
+                               style="text-decoration: none; color: inherit;">
+                                
+                                <span style="font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;">
+                                    {{ member.character_name }}
+                                </span>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
             {% else %}
             <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">
-                Waiting for GM approval...
+                {{ 'Waiting for GM approval...' | trans }}
             </div>
             {% endif %}
         </div>
         {% else %}
-            <p style="opacity: 0.6; font-style: italic;">You are not part of any campaigns yet.</p>
+            <p style="opacity: 0.6; font-style: italic;">{{ 'You are not part of any campaigns yet.' | trans }}</p>
         {% endfor %}
     </div>
 
     <!-- RIGHT COLUMN: Available to Join -->
     <div>
-        <h3>Find a Campaign</h3>
+        <h3>{{ 'Find a Campaign' | trans }}</h3>
         {% for camp in available_campaigns %}
         <div style="background: rgba(0,0,0,0.05); padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--ink);">
             <strong>{{ camp.name }}</strong>
@@ -90,20 +107,20 @@
             <form action="/campaigns/join" method="POST" style="display: flex; gap: 5px; margin-top: 10px;">
                 <input type="hidden" name="camp_id" value="{{ camp._id }}">
                 <select name="char_id" required style="font-size: 0.9rem; flex-grow: 1;">
-                    <option value="" disabled selected>Select Character</option>
-                    {% for char in my_chars %}
+                    <option value="" disabled selected>{{ 'Select Character' | trans }}</option>
+                     {% for char in my_chars %}
                     <option value="{{ char._id }}">{{ char.name }} ({{ char.class_archetype }})</option>
-                    {% endfor %}
-                </select>
-                <button class="btn btn-small">Request Join</button>
-            </form>
-        </div>
+                     {% endfor %}
+                 </select>
+                <button class="btn btn-small">{{ 'Request Join' | trans }}</button>
+             </form>
+         </div>
         {% else %}
         <div style="padding: 2rem; text-align: center; opacity: 0.6; border: 1px dashed #ccc;">
-            <p>No active campaigns found to join.</p>
+            <p>{{ 'No active campaigns found to join.' | trans }}</p>
         </div>
-        {% endfor %}
-    </div>
+         {% endfor %}
+     </div>
 
-</div>
-{% endblock %}
+ </div>
+ {% endblock %}

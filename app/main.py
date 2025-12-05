@@ -1,12 +1,20 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from app.auth import routes as auth_routes
 from app.characters import routes as character_routes
 from app.campaigns import routes as campaign_routes
 from app.wiki import routes as wiki_routes
 from fastapi.responses import FileResponse
+from app.core.i18n import load_translations, trans
+from app.config import settings
 
 app = FastAPI()
+
+load_translations(settings.LANGUAGE)
+
+templates = Jinja2Templates(directory="app/templates")
+templates.env.filters["trans"] = trans
 
 # Mount Static Files (CSS/JS)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

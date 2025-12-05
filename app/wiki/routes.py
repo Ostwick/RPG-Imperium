@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Form, status, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
+from app.templates import templates
 from bson import ObjectId
 from datetime import datetime
 
@@ -9,7 +9,6 @@ from app.auth.dependencies import get_current_user
 from app.wiki.models import WikiPage
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 wiki_collection = db["wiki"]
 
 # --- 1. INDEX (Nested Grouping) ---

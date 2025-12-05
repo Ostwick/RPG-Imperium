@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}The Grand Archives{% endblock %}
+{% block title %}{{ 'The Grand Archives' | trans }}{% endblock %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); margin-bottom: 2rem;">
     <div>
-        <h1 style="margin:0;">The Grand Archives</h1>
-        <p style="font-style: italic; opacity: 0.8;">Knowledge of the Realm</p>
+        <h1 style="margin:0;">{{ 'The Grand Archives' | trans }}</h1>
+        <p style="font-style: italic; opacity: 0.8;">{{ 'Knowledge of the Realm' | trans }}</p>
     </div>
     {% if user and user.role == 'GM' %}
-    <a href="/wiki/new" class="btn">Write New Entry</a>
+    <a href="/wiki/new" class="btn">{{ 'Write New Entry' | trans }}</a>
     {% endif %}
 </div>
 
@@ -20,7 +20,7 @@
         
         <!-- MAIN GROUP HEADER -->
         <h2 style="color: var(--accent); border-bottom: 2px solid var(--ink); margin-top: 0; font-variant: small-caps;">
-            {{ group }}
+            {{ group | trans }}
         </h2>
 
         <!-- LOOP THROUGH SUBCATEGORIES -->
@@ -48,7 +48,7 @@
     </div>
     {% else %}
     <div style="column-span: all; text-align: center; padding: 3rem; opacity: 0.6;">
-        <p>The archives are currently empty.</p>
+        <p>{{ 'The archives are currently empty.' | trans }}</p>
     </div>
     {% endfor %}
 
