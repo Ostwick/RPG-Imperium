@@ -12,54 +12,57 @@ function updateSimulator() {
     const attrInput = document.getElementById('sim-attribute-val');
     const resultSpan = document.getElementById('sim-result');
 
-    // Safety check: if core inputs are missing, stop to prevent crash
-    if (!actionSelect || !diffInput || !attrInput || !resultSpan) {
-        return;
-    }
+    if (!actionSelect || !diffInput || !attrInput || !resultSpan) return;
 
     const diffLevel = parseInt(diffInput.value);
     const charAttr = parseInt(attrInput.value) || 0;
-    
-    // 1. Auto-select Attribute name based on Action
-    const selectedOption = actionSelect.options[actionSelect.selectedIndex];
-    const relatedAttr = selectedOption.getAttribute('data-attr');
-    
+
+    // Find selected option and its attributes
+    let selectedOption = actionSelect.options[actionSelect.selectedIndex];
+    // If you changed selection programmatically by setting a key elsewhere,
+    // selectedOption may be null — try to find by value or data-attr-key
+    if (!selectedOption) {
+        selectedOption = actionSelect.querySelector('option[selected]') || actionSelect.querySelector('option');
+    }
+
+    // raw key and translated label
+    const relatedAttrKey = selectedOption ? (selectedOption.getAttribute('data-attr-key') || selectedOption.value) : null;
+    const relatedAttrLabel = selectedOption ? selectedOption.getAttribute('data-attr') : null;
+
+    // Update visible translated attribute label
     const attrLabel = document.getElementById('sim-related-attr');
     if (attrLabel) {
-        // Only overwrite the label if the option provides a translated attribute string.
-        // The small element's initial content is rendered server-side and already localized.
-        if (relatedAttr) attrLabel.innerText = relatedAttr;
+        if (relatedAttrLabel) {
+            attrLabel.innerText = relatedAttrLabel;
+        } else if (relatedAttrKey) {
+            // attempt to locate an option that carries the translated label
+            const match = actionSelect.querySelector(`option[data-attr-key="${relatedAttrKey}"]`);
+            if (match && match.getAttribute('data-attr')) {
+                attrLabel.innerText = match.getAttribute('data-attr');
+            } else {
+                // fallback to raw key (last resort)
+                attrLabel.innerText = relatedAttrKey;
+            }
+        } else {
+            attrLabel.innerText = '';
+        }
     }
 
-    // 2. Calculate Base Difficulty
+    // rest of simulator logic (no change)...
     const baseDC = DIFF_LEVELS[diffLevel] || 10;
-    
-    // Update Base DC text (only if the element exists in HTML)
     const baseDCDisplay = document.getElementById('display-base-dc');
-    if (baseDCDisplay) {
-        baseDCDisplay.innerText = baseDC;
-    }
+    if (baseDCDisplay) baseDCDisplay.innerText = baseDC;
 
-    // 3. Calculate Bonus (Attr / 2)
     const reduction = Math.floor(charAttr / 2);
-    
-    // Update Reduction text (only if the element exists in HTML)
     const reductionDisplay = document.getElementById('display-reduction');
-    if (reductionDisplay) {
-        reductionDisplay.innerText = reduction;
-    }
+    if (reductionDisplay) reductionDisplay.innerText = reduction;
 
-    // 4. Calculate Final Target
     let finalDC = baseDC - reduction;
-    
-    // Rule: Min 2 (Natural 1 always fails)
     if (finalDC < 2) finalDC = 2;
-
     resultSpan.innerText = finalDC + "+";
 
-    // Visual Feedback
     if (finalDC <= 5) resultSpan.style.color = "green";
-    else if (finalDC <= 10) resultSpan.style.color = "#c5a004"; // gold
+    else if (finalDC <= 10) resultSpan.style.color = "#c5a004";
     else if (finalDC <= 15) resultSpan.style.color = "orange";
     else resultSpan.style.color = "red";
 }

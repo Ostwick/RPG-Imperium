@@ -227,9 +227,10 @@ async def save_attributes(char_id: str, request: Request, user: dict = Depends(g
     return RedirectResponse(f"/characters/{char_id}", 303)
 
 @router.post("/characters/{char_id}/notes")
-async def save_notes(char_id: str, notes: str = Form(...), user: dict = Depends(get_current_user)):
+async def save_notes(char_id: str, notes: str = Form(""), user: dict = Depends(get_current_user)):
     if not user: return RedirectResponse("/auth/login", 303)
     char, is_owner, is_gm = await get_character_helper(char_id, user)
+    final_notes = notes if notes else ""
     await characters_collection.update_one({"_id": char["_id"]}, {"$set": {"private_notes": notes}})
     return RedirectResponse(f"/characters/{char_id}", 303)
 

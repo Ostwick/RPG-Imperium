@@ -5,6 +5,7 @@ from app.database import db
 # Collection Reference
 skills_rules_collection = db["skills_rules"]
 
+game_actions_collection = db["game_actions"]
 
 ATTRIBUTES = ["Vigor", "Control", "Endurance", "Cunning", "Social", "Intelligence"]
 
@@ -29,7 +30,7 @@ DIFFICULTY_LEVELS = {
 
 # --- STANDARD ACTIONS DATABASE ---
 # This populates the dropdown in the simulator
-GAME_ACTIONS = [
+DEFAULT_GAME_ACTIONS = [
     {"name": "Push/Lift Heavy Object", "attribute": "Vigor"},
     {"name": "Intimidate", "attribute": "Vigor"},
     {"name": "Shoot Target (Long Range)", "attribute": "Control"},
@@ -44,6 +45,17 @@ GAME_ACTIONS = [
     {"name": "Treat Wounds", "attribute": "Intelligence"},
     {"name": "Engineer Siege Engine", "attribute": "Intelligence"},
 ]
+
+async def get_game_actions():
+    docs = await game_actions_collection.find().to_list(1000)
+    if not docs:
+        # If DB has no actions, fall back to the defaults (do not auto-insert here)
+        return DEFAULT_GAME_ACTIONS
+    # Normalize: each doc may contain extra fields; ensure name+attribute present
+    actions = []
+    for d in docs:
+        actions.append({"name": d.get("name", "Unnamed Action"), "attribute": d.get("attribute", "")})
+    return actions
 
 # --- Skill Tree Logic ---
 

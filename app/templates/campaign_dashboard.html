@@ -241,20 +241,24 @@
                 <label><strong>{{ 'Action' | trans }}</strong></label>
                 <select id="sim-action" onchange="updateSimulator()" style="width: 100%;">
                     {% for action in actions %}
-                    <option value="{{ action.name }}" data-attr="{{ action.attribute }}">{{ action.name }}</option>
+                    <option value="{{ action.name }}"
+                            data-attr-key="{{ action.attribute }}"
+                            data-attr="{{ action.attribute | trans }}">
+                        {{ action.name }}
+                    </option>
                     {% endfor %}
                 </select>
-                <small id="sim-related-attr" style="display: block; text-align: right; color: #666;">{{ 'Vigor' | trans }}</small>
+                <small id="sim-related-attr" style="display: block; text-align: right; color: #666;"></small>
             </div>
 
             <div style="margin-bottom: 1rem;">
                 <label><strong>{{ 'Difficulty' | trans }}</strong></label>
                 <select id="sim-difficulty" onchange="updateSimulator()" style="width: 100%;">
-                    <option value="1">Lvl 1 ({{ 'Trivial' | trans }})</option>
-                    <option value="2">Lvl 2 ({{ 'Easy' | trans }})</option>
-                    <option value="3" selected>Lvl 3 ({{ 'Medium' | trans }})</option>
-                    <option value="4">Lvl 4 ({{ 'Hard' | trans }})</option>
-                    <option value="5">Lvl 5 ({{ 'Legendary' | trans }})</option>
+                    <option value="1">{{ 'Lvl' | trans }} 1 ({{ 'Trivial' | trans }})</option>
+                    <option value="2">{{ 'Lvl' | trans }} 2 ({{ 'Easy' | trans }})</option>
+                    <option value="3" selected>{{ 'Lvl' | trans }} 3 ({{ 'Medium' | trans }})</option>
+                    <option value="4">{{ 'Lvl' | trans }} 4 ({{ 'Hard' | trans }})</option>
+                    <option value="5">{{ 'Lvl' | trans }} 5 ({{ 'Legendary' | trans }})</option>
                 </select>
             </div>
 

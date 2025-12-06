@@ -7,7 +7,7 @@ from bson import ObjectId
 from app.database import db, users_collection, characters_collection
 from app.auth.dependencies import get_current_user
 from app.campaigns.models import Campaign, CampaignMember, MemberStatus, MapPin, Combatant, EnemyTemplate
-from app.game_rules import GAME_ACTIONS, DIFFICULTY_LEVELS, calculate_derived_stats
+from app.game_rules import DIFFICULTY_LEVELS, calculate_derived_stats, get_game_actions
 
 router = APIRouter()
 campaigns_collection = db["campaigns"]
@@ -94,11 +94,13 @@ async def campaign_dashboard(camp_id: str, request: Request, user: dict = Depend
 
     enemies_list = await bestiary_collection.find().to_list(100)
 
+    actions = await get_game_actions()
+
     return templates.TemplateResponse("campaign_dashboard.html", {
         "request": request, "user": user, "campaign": camp,
         "party": processed_party,
         "party_speed": avg_speed,
-        "actions": GAME_ACTIONS, "difficulty_levels": DIFFICULTY_LEVELS,
+        "actions": actions, "difficulty_levels": DIFFICULTY_LEVELS,
         "bestiary": enemies_list
     })
 

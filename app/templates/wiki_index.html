@@ -24,12 +24,14 @@
         </h2>
 
         <!-- LOOP THROUGH SUBCATEGORIES -->
-        {% for subname, pages in subcats.items() %}
+        {# sort subcategories by name for predictable order; use dictsort which returns list of (k,v) pairs #}
+        {% for subname, pages in subcats|dictsort %}
         <div style="margin-bottom: 1.2rem;">
             
             <!-- SUBHEADER -->
             <h4 style="margin-bottom: 8px; color: #555; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; border-bottom: 1px dashed rgba(0,0,0,0.1);">
-                {{ subname }}
+                {# Prefix subcategory with Roman numeral (per-group counter) #}
+                {{ loop.index | roman }}. {{ subname | trans }}
             </h4>
             
             <!-- PAGES LIST -->
@@ -37,7 +39,7 @@
                 {% for page in pages %}
                 <li style="margin-bottom: 4px; padding-left: 8px; border-left: 3px solid rgba(0,0,0,0.1);">
                     <a href="/wiki/{{ page._id }}" style="color: var(--ink); text-decoration: none; display: block; transition: color 0.2s;">
-                        📜 {{ page.title }}
+                        📜 {{ loop.index | roman }} {{ page.title }}
                     </a>
                 </li>
                 {% endfor %}

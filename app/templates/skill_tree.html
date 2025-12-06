@@ -5,7 +5,7 @@
 
 <div style="text-align: center; margin-bottom: 2rem;">
     <h1>{{ skill_name | trans }} - {{ 'Mastery' | trans }}</h1>
-    <p>{{ 'Related Attribute:' | trans }} <strong>{{ attribute }}</strong> ({{ 'Current' | trans }}: {{ attr_val }})</p>
+    <p>{{ 'Related Attribute:' | trans }} <strong>{{ attribute | trans }}</strong> ({{ 'Current' | trans }}: {{ attr_val }})</p>
     <a href="/characters/{{ character._id }}" class="btn btn-small">← {{ 'Back to Character' | trans }}</a>
 </div>
 
