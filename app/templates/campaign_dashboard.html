@@ -155,6 +155,12 @@
 
             {% if is_ready %}
             <h3 style="margin: 0 0 10px 0; color: #8a3324;">{{ ('Turn of {name}' | trans).replace('{name}', active_actor.name) }}</h3>
+
+            {% if active_actor.is_ranged %}
+            <div style="margin: 0 0 10px 0; font-size: 0.9rem; color: #555;">
+                {{ 'Ammo' | trans }}: {{ active_actor.ammo_remaining if active_actor.ammo_remaining is not none else '—' }}
+            </div>
+            {% endif %}
             
             <form action="/campaigns/{{ campaign._id }}/combat/act" method="POST">
                 <!-- Helper to find array index -->
@@ -191,7 +197,7 @@
 
                 <!-- Action Buttons -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                    <button name="action_type" value="Attack" class="btn" style="background: #8a3324;">⚔️ {{ 'Hit' | trans }}</button>
+                    <button name="action_type" value="Attack" class="btn" style="background: #8a3324;" {% if active_actor.is_ranged and (active_actor.ammo_remaining is not none) and active_actor.ammo_remaining <= 0 %}disabled title="{{ 'Out of ammo' | trans }}"{% endif %}>⚔️ {{ 'Hit' | trans }}</button>
                     <button name="action_type" value="Miss" class="btn" style="background: #e6b800; color: #000;">🚫 {{ 'Miss' | trans }}</button>
                 </div>
                 <button name="action_type" value="Wait" class="btn btn-small" style="width: 100%; margin-top: 5px; background: #666;">{{ 'Wait (Delay)' | trans }}</button>

@@ -1,20 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse, HTMLResponse
 from app.auth import routes as auth_routes
 from app.characters import routes as character_routes
 from app.campaigns import routes as campaign_routes
 from app.wiki import routes as wiki_routes
-from fastapi.responses import FileResponse
-from app.core.i18n import load_translations, trans
+from app.auth.dependencies import get_current_user
+from app.core.i18n import load_translations
+from app.templates import templates
 from app.config import settings
 
 app = FastAPI()
 
 load_translations(settings.LANGUAGE)
-
-templates = Jinja2Templates(directory="app/templates")
-templates.env.filters["trans"] = trans
 
 # Mount Static Files (CSS/JS)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -25,9 +23,9 @@ app.include_router(character_routes.router, tags=["Characters"])
 app.include_router(campaign_routes.router, tags=["Campaigns"])
 app.include_router(wiki_routes.router, tags=["Wiki"])
 
-@app.get("/")
-async def root():
-    return {"message": "Empire RPG System is Live"}
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request, user: dict = Depends(get_current_user)):
+    return templates.TemplateResponse("home.html", {"request": request, "user": user})
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():

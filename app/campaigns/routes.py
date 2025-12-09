@@ -96,6 +96,44 @@ async def campaign_dashboard(camp_id: str, request: Request, user: dict = Depend
 
     actions = await get_game_actions()
 
+    # Enrich combatants with ammo info (not persisted; for UI only)
+    if camp.get("combat_active"):
+        enriched = []
+        ranged_types = {"Bow", "Crossbow", "Throwing"}
+        for comb in camp.get("combatants", []):
+            comb_copy = dict(comb)
+            comb_copy["ammo_remaining"] = None
+            comb_copy["is_ranged"] = False
+            if comb.get("type") == "Player":
+                char = await characters_collection.find_one({"_id": ObjectId(comb.get("id"))})
+                if char:
+                    equip = char.get("equipment", {}) or {}
+                    # detect ranged weapon
+                    weapon_type = None
+                    weapon_slot = None
+                    weapon_item = None
+                    for slot in ("hand_main", "hand_off"):
+                        w = equip.get(slot)
+                        if w and w.get("weapon_type") in ranged_types and w.get("category") == "Weapon":
+                            weapon_type = w.get("weapon_type")
+                            weapon_slot = slot
+                            weapon_item = w
+                            break
+                    if weapon_type in ranged_types:
+                        comb_copy["is_ranged"] = True
+                        ammo_qty = 0
+                        if weapon_type == "Throwing":
+                            if weapon_item:
+                                ammo_qty = max(int(weapon_item.get("quantity", 0)), 0)
+                        else:
+                            for slot in ("hand_off", "hand_main"):
+                                itm = equip.get(slot)
+                                if itm and itm.get("category") == "Ammo":
+                                    ammo_qty += max(int(itm.get("quantity", 0)), 0)
+                        comb_copy["ammo_remaining"] = ammo_qty
+            enriched.append(comb_copy)
+        camp["combatants"] = enriched
+
     return templates.TemplateResponse("campaign_dashboard.html", {
         "request": request, "user": user, "campaign": camp,
         "party": processed_party,
@@ -349,6 +387,67 @@ async def combat_action(
         msg = f"{actor['name']} attacks {target['name']} but MISSES!"
 
     elif action_type == "Attack":
+        # --- Ammo handling for ranged weapons ---
+        if actor["type"] == "Player":
+            # Fetch latest character state to inspect equipped weapon/ammo
+            actor_char = await characters_collection.find_one({"_id": ObjectId(actor["id"])} )
+            if actor_char:
+                equip = actor_char.get("equipment", {}) or {}
+                ranged_types = {"Bow", "Crossbow", "Throwing"}
+
+                # Identify if the equipped weapon is ranged
+                weapon_type = None
+                weapon_slot = None
+                weapon_item = None
+                for slot in ("hand_main", "hand_off"):
+                    w = equip.get(slot)
+                    if w and w.get("weapon_type") in ranged_types and w.get("category") == "Weapon":
+                        weapon_type = w.get("weapon_type")
+                        weapon_slot = slot
+                        weapon_item = w
+                        break
+
+                if weapon_type in ranged_types:
+                    if weapon_type == "Throwing":
+                        # Throwing uses its own quantity on the equipped weapon item
+                        if not weapon_item or weapon_item.get("quantity", 0) <= 0:
+                            return RedirectResponse(f"/campaigns/{camp_id}/dashboard?error=Out%20of%20ammo", 303)
+                        dec_result = await characters_collection.update_one(
+                            {
+                                "_id": ObjectId(actor["id"]),
+                                f"equipment.{weapon_slot}.id": weapon_item.get("id"),
+                                f"equipment.{weapon_slot}.quantity": {"$gt": 0}
+                            },
+                            {"$inc": {f"equipment.{weapon_slot}.quantity": -1}}
+                        )
+                        if dec_result.modified_count == 0:
+                            return RedirectResponse(f"/campaigns/{camp_id}/dashboard?error=Out%20of%20ammo", 303)
+                    else:
+                        # Bows/Crossbows use separate Ammo category items
+                        ammo_slot = None
+                        ammo_item = None
+                        for slot in ("hand_off", "hand_main"):
+                            itm = equip.get(slot)
+                            if itm and itm.get("category") == "Ammo":
+                                ammo_slot = slot
+                                ammo_item = itm
+                                break
+
+                        if not ammo_item or ammo_item.get("quantity", 0) <= 0:
+                            return RedirectResponse(f"/campaigns/{camp_id}/dashboard?error=Out%20of%20ammo", 303)
+
+                        # Decrement ammo quantity in the equipped slot, guard against negatives
+                        dec_result = await characters_collection.update_one(
+                            {
+                                "_id": ObjectId(actor["id"]),
+                                f"equipment.{ammo_slot}.id": ammo_item.get("id"),
+                                f"equipment.{ammo_slot}.quantity": {"$gt": 0}
+                            },
+                            {"$inc": {f"equipment.{ammo_slot}.quantity": -1}}
+                        )
+                        if dec_result.modified_count == 0:
+                            return RedirectResponse(f"/campaigns/{camp_id}/dashboard?error=Out%20of%20ammo", 303)
+
         raw_dmg = actor["damage"] + bonus_dmg
         multiplier = 1.0
         if is_crit:
