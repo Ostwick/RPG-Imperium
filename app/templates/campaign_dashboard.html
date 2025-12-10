@@ -4,46 +4,86 @@
 {% block content %}
 <script src="/static/js/campaign.js"></script>
 
+<style>
+.dashboard-top {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.dashboard-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.dashboard-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .dashboard-stats {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    div[style*="grid-template-columns: 2fr 1fr"],
+    div[style*="grid-template-columns: 3fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+
 <!-- TOP BAR: Title & Economy -->
-<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 2rem;">
-    <div>
+<div class="dashboard-top">
+    <div class="dashboard-title">
         <h1 style="margin: 0;">{{ campaign.name }}</h1>
         <small>{{ 'GM Dashboard' | trans }}</small>
     </div>
     
-        
-<!-- RIGHT SIDE: Economy & Actions -->
-    <div style="text-align: right; display: flex; gap: 2rem; align-items: flex-start;">
+<!-- Stats Row -->
+    <div class="dashboard-stats">
         <!-- Party Speed -->
-        <div title="{{ 'Average Party Travel Speed' | trans }}">
+        <div title="{{ 'Average Party Travel Speed' | trans }}" style="text-align: center;">
             <div style="font-size: 0.8rem;">{{ 'Party Speed' | trans }}</div>
             <span style="font-size: 1.5rem; font-weight: bold;">🐎 {{ party_speed }}%</span>
         </div>
 
-        <div title="{{ 'Total Gold in Party Treasury' | trans }}">
+        <div title="{{ 'Total Gold in Party Treasury' | trans }}" style="text-align: center;">
             <div style="font-size: 0.8rem;">{{ 'Party Treasury' | trans }}</div>
             <span style="font-size: 1.5rem; color: #c5a004; font-weight: bold;">{{ campaign.party_gold }} 💰</span>
         </div>
         
-        <div title="{{ 'Weekly Maintenance Cost' | trans }}">
+        <div title="{{ 'Weekly Maintenance Cost' | trans }}" style="text-align: center;">
             <div style="font-size: 0.8rem;">{{ 'Weekly Upkeep' | trans }}</div>
             <span style="font-size: 1.5rem; color: var(--accent); font-weight: bold;">-{{ campaign.upkeep_cost }} 💰</span>
         </div>
+    </div>
+    
+    <!-- Actions Row -->
+    <div class="dashboard-actions">
+        <button onclick="document.getElementById('settingsModal').style.display='block'" class="btn btn-small">
+            ⚙️ {{ 'Settings' | trans }}
+        </button>
         
-        <!-- Actions Column -->
-        <div style="display: flex; flex-direction: column; gap: 5px;">
-            <button onclick="document.getElementById('settingsModal').style.display='block'" class="btn btn-small" style="width: 100%;">
-                ⚙️ {{ 'Settings' | trans }}
+        {% if campaign.upkeep_cost > 0 %}
+        <form action="/campaigns/{{ campaign._id }}/gold/pay_upkeep" method="POST" onsubmit="return confirm('{{ 'Pay ' ~ campaign.upkeep_cost ~ ' gold for weekly upkeep?' | trans }}');" style="margin: 0;">
+            <button class="btn btn-small" style="background: #8a3324;" title="{{ 'Deduct upkeep from treasury' | trans }}">
+                {{ 'Pay Upkeep' | trans }}
             </button>
-            
-            {% if campaign.upkeep_cost > 0 %}
-            <form action="/campaigns/{{ campaign._id }}/gold/pay_upkeep" method="POST" onsubmit="return confirm('{{ 'Pay ' ~ campaign.upkeep_cost ~ ' gold for weekly upkeep?' | trans }}');">
-                <button class="btn btn-small" style="background: #8a3324; width: 100%; font-size: 0.75rem;" title="{{ 'Deduct upkeep from treasury' | trans }}">
-                    {{ 'Pay Upkeep' | trans }}
-                </button>
-            </form>
-            {% endif %}
-        </div>
+        </form>
+        {% endif %}
     </div>
 </div>
 <!-- End of Top Bar -->
@@ -285,9 +325,9 @@
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
     
     <!-- PARTY LIST -->
-    <div>
+    <div style="overflow-x: auto;">
         <h3>{{ 'Active Party' | trans }}</h3>
-        <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4);">
+        <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4); min-width: 600px;">
             <tr style="background: var(--ink); color: var(--parchment);">
                 <th style="padding: 10px; text-align: left;">{{ 'Character' | trans }}</th>
                 <th>{{ 'HP' | trans }}</th>
@@ -371,7 +411,7 @@
 
 <!-- MODAL: Settings -->
 <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
-    <div style="background: var(--parchment); width: 400px; margin: 15vh auto; padding: 2rem; border: 2px solid var(--ink);">
+    <div style="background: var(--parchment); width: 90%; max-width: 400px; margin: 15vh auto; padding: 2rem; border: 2px solid var(--ink);">
         <h3>{{ 'Campaign Settings' | trans }}</h3>
         <form action="/campaigns/{{ campaign._id }}/settings" method="POST">
             <label>{{ 'Map Image URL' | trans }}</label>

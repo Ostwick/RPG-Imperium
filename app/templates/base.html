@@ -33,6 +33,7 @@
             align-items: center;
             border-bottom: 3px solid var(--accent);
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            position: relative;
         }
 
         nav .brand {
@@ -62,6 +63,75 @@
 
         nav a:hover {
             color: var(--gold);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 4px;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background-color: var(--parchment);
+            transition: all 0.3s;
+            border-radius: 2px;
+        }
+
+        /* Mobile Menu Styles */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            nav ul {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                max-width: 300px;
+                height: 100vh;
+                background-color: var(--ink);
+                flex-direction: column;
+                gap: 0;
+                padding: 5rem 0 2rem 0;
+                box-shadow: -4px 0 10px rgba(0,0,0,0.5);
+                transition: right 0.3s ease-in-out;
+                z-index: 1000;
+            }
+
+            nav ul.active {
+                right: 0;
+            }
+
+            nav ul li {
+                padding: 1rem 2rem;
+                border-bottom: 1px solid rgba(244, 228, 188, 0.1);
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            nav ul li a {
+                display: block;
+                width: 100%;
+            }
+
+            /* Hamburger Animation */
+            .hamburger.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+
+            .hamburger.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .hamburger.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(7px, -6px);
+            }
         }
 
         /* --- Main Layout --- */
@@ -135,15 +205,22 @@
 
     <nav>
         <a href="/dashboard" class="brand">{{ 'Empire RPG' | trans }}</a>
-        <ul>
+        
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <ul id="navMenu">
             {% if user %}
                 <li>{{ 'Logged in as' | trans }}: <strong>{{ user.sub }}</strong></li>
-                <li><a href="/dashboard">{{ 'Dashboard' | trans }}</a></li>
-                <li><a href="/campaigns">{{ 'Campaigns' | trans }}</a></li>
-                <li><a href="/wiki">{{ 'Archives' | trans }}</a></li>
-                <li><a href="/auth/logout">{{ 'Logout' | trans }}</a></li>
+                <li><a href="/dashboard" onclick="closeMenu()">{{ 'Dashboard' | trans }}</a></li>
+                <li><a href="/campaigns" onclick="closeMenu()">{{ 'Campaigns' | trans }}</a></li>
+                <li><a href="/wiki" onclick="closeMenu()">{{ 'Archives' | trans }}</a></li>
+                <li><a href="/auth/logout" onclick="closeMenu()">{{ 'Logout' | trans }}</a></li>
             {% else %}
-                <li><a href="/auth/login">{{ 'Login' | trans }}</a></li>
+                <li><a href="/auth/login" onclick="closeMenu()">{{ 'Login' | trans }}</a></li>
             {% endif %}
         </ul>
     </nav>
@@ -163,7 +240,32 @@
             {% endblock %}
         </div>
 
-    
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            menu.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const menu = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            menu.classList.remove('active');
+            hamburger.classList.remove('active');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const nav = document.querySelector('nav');
+            const menu = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            
+            if (!nav.contains(event.target) && menu.classList.contains('active')) {
+                closeMenu();
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -3,65 +3,143 @@
 
 {% block content %}
 
+<style>
+    .char-header {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        border-bottom: 3px solid var(--ink);
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .char-header-info {
+        flex-grow: 1;
+    }
+    
+    .char-header-points {
+        text-align: right;
+        min-width: 150px;
+    }
+
+    .char-header-photo {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .char-photo-img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 15px;
+        border: 3px solid var(--accent);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        background: #333;
+    }
+    
+    @media (max-width: 768px) {
+        .char-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .char-header-top {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            align-items: flex-start;
+        }
+        
+        .char-header-photo {
+            flex-shrink: 0;
+        }
+        
+        .char-header-top-right {
+            flex-grow: 1;
+        }
+        
+        .char-header-info h1 {
+            font-size: 1.8rem !important;
+        }
+        
+        .char-header-points {
+            text-align: left;
+            min-width: auto;
+            width: 100%;
+        }
+    }
+</style>
     
 <!-- HEADER: Photo, Details, Points -->
-<div style="display: flex; gap: 2rem; align-items: center; border-bottom: 3px solid var(--ink); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-    
-    <!-- 1. Character Photo -->
-    <div style="position: relative; width: 120px; height: 120px; flex-shrink: 0;">
-        <img src="{{ character.image_url }}" 
-             style="width: 100%; height: 100%; object-fit: cover; border-radius: 15px; border: 3px solid var(--accent); box-shadow: 0 5px 15px rgba(0,0,0,0.3); background: #333;"
-             onerror="this.src='https://i.imgur.com/62jO8iC.png'">
-        
-        <button onclick="document.getElementById('photoModal').style.display='block'" 
-                title="Change Portrait"
-                style="position: absolute; bottom: -5px; right: -5px; background: var(--ink); color: #fff; border: 1px solid var(--parchment); border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
-            📷
-        </button>
+<div class="char-header">
+    <div class="char-header-top">
+        <!-- 1. Character Photo -->
+        <div class="char-header-photo">
+            <img src="{{ character.image_url }}" 
+                 class="char-photo-img"
+                 onerror="this.src='https://i.imgur.com/62jO8iC.png'">
+            
+            <button onclick="document.getElementById('photoModal').style.display='block'" 
+                    title="Change Portrait"
+                    style="position: absolute; bottom: -5px; right: -5px; background: var(--ink); color: #fff; border: 1px solid var(--parchment); border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+                📷
+            </button>
+        </div>
+
+        <!-- Top Right: Level & Gold -->
+        <div class="char-header-top-right">
+            <!-- LEVEL DISPLAY -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="background: var(--ink); color: var(--parchment); padding: 5px 10px; border-radius: 4px; font-weight: bold; font-variant: small-caps;">
+                    {{ 'Level' | trans }} {{ character.status.level }}
+                </div>
+                
+                <!-- LEVEL UP BUTTON -->
+                {% if is_gm and character.status.level < 20 %}
+                <form action="/characters/{{ character._id }}/levelup" method="POST" onsubmit="return confirm('Level Up {{ character.name }} to {{ character.status.level + 1 }}?');">
+                    <button class="btn btn-small" title="{{ 'Grant Level Up' | trans }}" style="background: var(--accent); border: 1px solid var(--ink);">▲</button>
+                </form>
+                {% endif %}
+            </div>
+            
+            <!-- Gold Display -->
+            <div style="display: inline-flex; align-items: center; background: rgba(197, 160, 4, 0.1); border: 1px solid #c5a004; padding: 5px 15px; border-radius: 20px;">
+                <span style="font-size: 1.5rem; margin-right: 5px;">💰</span>
+                <span style="font-weight: bold; font-size: 1.3rem; color: var(--ink);">{{ character.status.gold }}</span>
+                
+                {% if is_gm %}
+                <button onclick="document.getElementById('goldModal').style.display='block'" 
+                        class="btn-text" 
+                        style="margin-left: 10px; color: var(--accent); font-size: 0.8rem;">({{ 'Edit' | trans }})</button>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- 2. Character Info -->
-    <div style="flex-grow: 1;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: 1px;">{{ character.name }}</h1>
-            
-            <!-- LEVEL DISPLAY -->
-            <div style="background: var(--ink); color: var(--parchment); padding: 5px 10px; border-radius: 4px; font-weight: bold; font-variant: small-caps;">
-                {{ 'Level' | trans }} {{ character.status.level }}
-            </div>
+    <div class="char-header-info">
+        <h1 style="margin: 0; font-size: 2.5rem; letter-spacing: 1px;">{{ character.name }}</h1>
 
-            <!-- LEVEL UP BUTTON -->
-            {% if is_gm and character.status.level < 20 %}
-            <form action="/characters/{{ character._id }}/levelup" method="POST" onsubmit="return confirm('Level Up {{ character.name }} to {{ character.status.level + 1 }}?');">
-                <button class="btn btn-small" title="{{ 'Grant Level Up' | trans }}" style="background: var(--accent); border: 1px solid var(--ink);">▲</button>
-            </form>
-            {% endif %}
-        </div>
-
-        <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px; display: flex; align-items: center; gap: 10px;">
+        <div style="font-size: 1.2rem; font-style: italic; color: var(--accent); margin-top: 5px;">
             <!-- Display Culture & Archetype -->
             <span>{{ character.culture }} - {{ character.class_archetype }}</span>
-            <!-- BIO BUTTON -->
-            <button onclick="document.getElementById('bioModal').style.display='block'" class="btn-text" style="font-size: 0.9rem; border-bottom: 1px dashed var(--accent); cursor: pointer;">
-                📖 {{ 'Read Bio' | trans }}
-            </button>
         </div>
         
-        <!-- Gold Display -->
-        <div style="margin-top: 15px; display: inline-flex; align-items: center; background: rgba(197, 160, 4, 0.1); border: 1px solid #c5a004; padding: 5px 15px; border-radius: 20px;">
-            <span style="font-size: 1.5rem; margin-right: 5px;">💰</span>
-            <span style="font-weight: bold; font-size: 1.3rem; color: var(--ink);">{{ character.status.gold }}</span>
-            
-            {% if is_gm %}
-            <button onclick="document.getElementById('goldModal').style.display='block'" 
-                    class="btn-text" 
-                    style="margin-left: 10px; color: var(--accent); font-size: 0.8rem;">({{ 'Edit' | trans }})</button>
-            {% endif %}
-        </div>
+        <!-- BIO BUTTON -->
+        <button onclick="document.getElementById('bioModal').style.display='block'" class="btn-text" style="font-size: 0.9rem; border-bottom: 1px dashed var(--accent); cursor: pointer; margin-top: 5px; color: var(--accent);">
+            📖 {{ 'Read Bio' | trans }}
+        </button>
     </div>
 
     <!-- 3. Points Counter -->
-    <div style="text-align: right; min-width: 150px;">
+    <div class="char-header-points">
         <div style="margin-bottom: 5px;">
             <strong>{{ 'Attr Points:' | trans }}</strong> 
             <span style="font-size: 1.4rem; color: var(--accent); font-weight: bold;">{{ character.points.attribute_points }}</span>
@@ -128,6 +206,14 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+<style>
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
 
     <!-- LEFT: ATTRIBUTES (Form for Editing) -->
     <div>

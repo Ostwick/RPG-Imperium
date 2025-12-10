@@ -7,6 +7,14 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+<style>
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
     
     <!-- LEFT COLUMN: My Lists -->
     <div>
