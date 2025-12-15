@@ -7,8 +7,9 @@
     <p style="opacity:0.75; margin:0.25rem 0 0;">{{ 'Hover or tap the markers to learn about each city.' | trans }}</p>
 </div>
 
-<div id="map-shell" style="position: relative; width: 100%; max-width: 1000px; margin: 0 auto; background: #111; border: 3px solid var(--ink); box-shadow: 0 0 12px rgba(0,0,0,0.5); overflow: hidden;">
-    <img src="{{ map_image_url }}" alt="World Map" style="width: 100%; height: auto; display: block;">
+<div id="map-shell" style="position: relative; width: 100%; max-width: 1200px; height: 600px; margin: 0 auto; background: #111; border: 3px solid var(--ink); box-shadow: 0 0 12px rgba(0,0,0,0.5); overflow: auto; cursor: grab;">
+    <div id="map-container" style="position: relative; display: inline-block;">
+        <img id="map-image" src="{{ map_image_url }}" alt="World Map" style="display: block; user-select: none; pointer-events: none;">
 
     {% for pin in city_pins %}
     <div class="city-pin culture-{{ (pin.culture or '')|lower|replace(' ', '-') }}" style="left: {{ pin.x }}%; top: {{ pin.y }}%;" data-name="{{ pin.name }}" data-desc="{{ pin.description }}" data-culture="{{ pin.culture or '' }}">
@@ -19,6 +20,7 @@
         </div>
     </div>
     {% endfor %}
+    </div>
 </div>
 
 <div id="pin-detail" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.5); border: 1px solid #8b7d6b; border-radius: 4px; display: none;">
@@ -127,6 +129,44 @@
         pin.setAttribute('tabindex', '0');
         pin.setAttribute('role', 'button');
         pin.setAttribute('aria-label', pin.dataset.name);
+    });
+
+    // Draggable map scrolling
+    const mapShell = document.getElementById('map-shell');
+    let isDown = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    mapShell.addEventListener('mousedown', (e) => {
+        // Don't drag if clicking a city pin
+        if (e.target.closest('.city-pin')) return;
+        
+        isDown = true;
+        mapShell.style.cursor = 'grabbing';
+        startX = e.pageX - mapShell.offsetLeft;
+        startY = e.pageY - mapShell.offsetTop;
+        scrollLeft = mapShell.scrollLeft;
+        scrollTop = mapShell.scrollTop;
+    });
+
+    mapShell.addEventListener('mouseleave', () => {
+        isDown = false;
+        mapShell.style.cursor = 'grab';
+    });
+
+    mapShell.addEventListener('mouseup', () => {
+        isDown = false;
+        mapShell.style.cursor = 'grab';
+    });
+
+    mapShell.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - mapShell.offsetLeft;
+        const y = e.pageY - mapShell.offsetTop;
+        const walkX = (x - startX) * 1.5; // Scroll speed multiplier
+        const walkY = (y - startY) * 1.5;
+        mapShell.scrollLeft = scrollLeft - walkX;
+        mapShell.scrollTop = scrollTop - walkY;
     });
 </script>
 {% endblock %}
