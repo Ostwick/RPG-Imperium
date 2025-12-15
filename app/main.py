@@ -17,7 +17,7 @@ load_translations(settings.LANGUAGE)
 # City Pins for World Map
 CITY_PINS = [
     {"name": "Imperium", "x": 39.3, "y": 43, "description": "Trono imperial, Senado e Patriarcado.", "culture": "Imperial"},
-    {"name": "Yarilus", "x": 45.5, "y": 55, "description": "Vilarejo produtos de grãos.", "culture": "Imperial"}
+    {"name": "Yarilus", "x": 45.5, "y": 55, "description": "Vilarejo produtor de grãos.", "culture": "Imperial"}
 ]
 
 # Mount Static Files (CSS/JS)
