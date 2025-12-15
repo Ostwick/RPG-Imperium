@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ 'World Map' | trans }}{% endblock %}
+
+{% block content %}
+<div style="text-align:center; margin-bottom:1.5rem;">
+    <h1 style="margin:0;">{{ 'World Map' | trans }}</h1>
+    <p style="opacity:0.75; margin:0.25rem 0 0;">{{ 'Hover or tap the markers to learn about each city.' | trans }}</p>
+</div>
+
+<div id="map-shell" style="position: relative; width: 100%; max-width: 1000px; margin: 0 auto; background: #111; border: 3px solid var(--ink); box-shadow: 0 0 12px rgba(0,0,0,0.5); overflow: hidden;">
+    <img src="{{ map_image_url }}" alt="World Map" style="width: 100%; height: auto; display: block;">
+
+    {% for pin in city_pins %}
+    <div class="city-pin culture-{{ (pin.culture or '')|lower|replace(' ', '-') }}" style="left: {{ pin.x }}%; top: {{ pin.y }}%;" data-name="{{ pin.name }}" data-desc="{{ pin.description }}" data-culture="{{ pin.culture or '' }}">
+        <div class="city-dot"></div>
+        <div class="city-tooltip">
+            <strong>{{ pin.name }}</strong><br>
+            <span style="font-size: 0.85rem;">{{ pin.description }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="pin-detail" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.5); border: 1px solid #8b7d6b; border-radius: 4px; display: none;">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h3 id="detail-title" style="margin:0;"></h3>
+        <button class="btn btn-small" onclick="hideDetail()" style="background:#666;">✕</button>
+    </div>
+    <p id="detail-desc" style="margin:0.5rem 0 0; line-height:1.4;"></p>
+</div>
+
+<style>
+.city-pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 5;
+}
+
+.city-dot {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Culture color presets: border color by predominant culture */
+.city-pin.culture-khaarun .city-dot { border-color: #D4B44C; }
+.city-pin.culture-asharim .city-dot { border-color: #D9822B; }
+.city-pin.culture-imperial .city-dot { border-color: #5B3A77; }
+.city-pin.culture-caelwyn .city-dot { border-color: #2F5E3E; }
+.city-pin.culture-skjordheim .city-dot { border-color: #2F4F6F; }
+.city-pin.culture-valcaria .city-dot { border-color: #8C1D18; }
+
+.city-pin:hover .city-dot,
+.city-pin:focus .city-dot {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+.city-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: #f4e4bc;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    min-width: 180px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.city-pin:hover .city-tooltip,
+.city-pin:focus .city-tooltip {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    #map-shell {
+        max-width: 100%;
+    }
+    .city-tooltip {
+        display: none;
+    }
+    #pin-detail {
+        display: block;
+    }
+}
+</style>
+
+<script>
+    const detail = document.getElementById('pin-detail');
+    const detailTitle = document.getElementById('detail-title');
+    const detailDesc = document.getElementById('detail-desc');
+
+    function showDetail(name, desc) {
+        detailTitle.textContent = name;
+        detailDesc.textContent = desc;
+        detail.style.display = 'block';
+        detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideDetail() {
+        detail.style.display = 'none';
+    }
+
+    document.querySelectorAll('.city-pin').forEach(pin => {
+        pin.addEventListener('click', () => {
+            showDetail(pin.dataset.name, pin.dataset.desc);
+        });
+        pin.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showDetail(pin.dataset.name, pin.dataset.desc);
+            }
+        });
+        pin.setAttribute('tabindex', '0');
+        pin.setAttribute('role', 'button');
+        pin.setAttribute('aria-label', pin.dataset.name);
+    });
+</script>
+{% endblock %}

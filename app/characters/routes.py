@@ -234,6 +234,13 @@ async def save_notes(char_id: str, notes: str = Form(""), user: dict = Depends(g
     await characters_collection.update_one({"_id": char["_id"]}, {"$set": {"private_notes": notes}})
     return RedirectResponse(f"/characters/{char_id}", 303)
 
+@router.post("/characters/{char_id}/bio")
+async def save_bio(char_id: str, public_bio: str = Form(""), user: dict = Depends(get_current_user)):
+    if not user: return RedirectResponse("/auth/login", 303)
+    char, is_owner, is_gm = await get_character_helper(char_id, user)
+    await characters_collection.update_one({"_id": char["_id"]}, {"$set": {"public_bio": public_bio}})
+    return RedirectResponse(f"/characters/{char_id}", 303)
+
 # --- ACTION: Add Item (GM ONLY) ---
 @router.post("/characters/{char_id}/inventory/add")
 async def add_item(

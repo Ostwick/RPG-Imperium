@@ -14,6 +14,12 @@ app = FastAPI()
 
 load_translations(settings.LANGUAGE)
 
+# City Pins for World Map
+CITY_PINS = [
+    {"name": "Imperium", "x": 39.3, "y": 43, "description": "Trono imperial, Senado e Patriarcado.", "culture": "Imperial"},
+    {"name": "Yarilus", "x": 45.5, "y": 55, "description": "Vilarejo produtos de grãos.", "culture": "Imperial"}
+]
+
 # Mount Static Files (CSS/JS)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -26,6 +32,20 @@ app.include_router(wiki_routes.router, tags=["Wiki"])
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request, user: dict = Depends(get_current_user)):
     return templates.TemplateResponse("home.html", {"request": request, "user": user})
+
+
+@app.get("/map", response_class=HTMLResponse)
+async def world_map(request: Request, user: dict = Depends(get_current_user)):
+    map_image_url = "/static/img/Maltania.png"
+    return templates.TemplateResponse(
+        "map_overview.html",
+        {
+            "request": request,
+            "user": user,
+            "map_image_url": map_image_url,
+            "city_pins": CITY_PINS,
+        },
+    )
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
