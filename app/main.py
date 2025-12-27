@@ -17,7 +17,20 @@ load_translations(settings.LANGUAGE)
 # City Pins for World Map
 CITY_PINS = [
     {"name": "Imperium", "x": 39.3, "y": 43, "description": "Trono imperial, Senado e Patriarcado.", "culture": "Imperial"},
-    {"name": "Yarilus", "x": 45.5, "y": 55, "description": "Vilarejo produtor de grãos.", "culture": "Imperial"}
+    {"name": "Ferrum", "x": 53.35, "y": 42.5, "description": "Armas, forjas e oficinas estatais.", "culture": "Imperial"},
+    {"name": "Argentum", "x": 40.3, "y": 59.1, "description": "Moeda, bancos e casas de cunhagem.", "culture": "Imperial"},
+    {"name": "Marchia Silvarum", "x": 32.9, "y": 38, "description": "Fronteira com Caelwyn.", "culture": "Imperial"},
+    {"name": "Marchia Orientalis", "x": 60.2, "y": 35, "description": "Fronteira contra Kharuun.", "culture": "Imperial"},
+    {"name": "Yarilus", "x": 45.75, "y": 54.5, "description": "Vilarejo produtor de grãos.", "culture": "Imperial"},
+    {"name": "Ager Magnus", "x": 36.9, "y": 54.5, "description": "Vilarejo produtor de grãos.", "culture": "Imperial"},
+    {"name": "Domus Trabium", "x": 38.3, "y": 48.7, "description": "Vilarejo produtor de madeira.", "culture": "Imperial"},
+    {"name": "Silva Coronae", "x": 39.8, "y": 52.4, "description": "Vilarejo produtor de madeira.", "culture": "Imperial"},
+    {"name": "Argentum Profundum", "x": 32.6, "y": 42, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"},
+    {"name": "Vallis Argenti", "x": 34.3, "y": 45, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"},
+    {"name": "Nummus Clarus", "x": 30.3, "y": 45.7, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"},
+    {"name": "Argentum Lunae", "x": 43.6, "y": 45.5, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"},
+    {"name": "Vena Alba", "x": 48.85, "y": 45.5, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"},
+    {"name": "Custodia Nitens", "x": 48.8, "y": 42.7, "description": "Vilarejo produtor de prata/ouro.", "culture": "Imperial"}
 ]
 
 # Mount Static Files (CSS/JS)

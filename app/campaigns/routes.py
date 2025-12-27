@@ -180,13 +180,13 @@ async def transfer_gold(
 # --- GM: Update Settings (Map, Upkeep) ---
 @router.post("/campaigns/{camp_id}/settings")
 async def update_settings(
-    camp_id: str, map_url: str = Form(...), upkeep: int = Form(...), user: dict = Depends(get_current_user)
+    camp_id: str, map_url: str = Form(...), upkeep: int = Form(...), renown: int = Form(0), user: dict = Depends(get_current_user)
 ):
     if not user: return RedirectResponse("/auth/login", 303)
     camp, is_gm = await get_campaign_helper(camp_id, user)
     if not is_gm: return RedirectResponse("/", 303)
 
-    await campaigns_collection.update_one({"_id": ObjectId(camp_id)}, {"$set": {"map_url": map_url, "upkeep_cost": upkeep}})
+    await campaigns_collection.update_one({"_id": ObjectId(camp_id)}, {"$set": {"map_url": map_url, "upkeep_cost": upkeep, "renown": renown}})
     return RedirectResponse(f"/campaigns/{camp_id}/dashboard", 303)
 
 # --- ACTION: Pay Upkeep ---

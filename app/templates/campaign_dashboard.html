@@ -69,6 +69,11 @@
             <div style="font-size: 0.8rem;">{{ 'Weekly Upkeep' | trans }}</div>
             <span style="font-size: 1.5rem; color: var(--accent); font-weight: bold;">-{{ campaign.upkeep_cost }} 💰</span>
         </div>
+        
+        <div title="{{ 'Party Reputation Across the Lands' | trans }}" style="text-align: center;">
+            <div style="font-size: 0.8rem;">{{ 'Renown' | trans }}</div>
+            <span style="font-size: 1.5rem; font-weight: bold;">⭐ {{ campaign.renown | default(0) }}</span>
+        </div>
     </div>
     
     <!-- Actions Row -->
@@ -419,6 +424,9 @@
             
             <label>{{ 'Weekly Upkeep Cost' | trans }}</label>
             <input type="number" name="upkeep" value="{{ campaign.upkeep_cost }}">
+            
+            <label>{{ 'Party Renown' | trans }}</label>
+            <input type="number" name="renown" value="{{ campaign.renown | default(0) }}">
             
             <div style="margin-top: 1rem; display: flex; gap: 10px;">
                 <button class="btn" style="flex: 1;">{{ 'Save' | trans }}</button>
